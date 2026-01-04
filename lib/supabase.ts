@@ -1,19 +1,9 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jtsfnnruhykytwsghtvx.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0c2ZubnJ1aHlreXR3c2dodHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU2NTYsImV4cCI6MjA4MjgzMTY1Nn0.CQ8U_urOADw2Nx1u45lh6dUqHqB9tuMcx7HloXp7VC4';
 
-// 빌드 시점에 환경변수가 없을 때를 대비
-let supabase: SupabaseClient;
-
-if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
-} else {
-  // 더미 클라이언트 (빌드 시에만 사용됨)
-  supabase = createClient('https://placeholder.supabase.co', 'placeholder-key');
-}
-
-export { supabase };
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // 학생 데이터 타입 정의
 export interface Student {
