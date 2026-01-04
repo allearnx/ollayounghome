@@ -5,6 +5,24 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOi
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// 사용자 역할 타입 정의
+export type UserRole = 'admin' | 'staff';
+
+// 프로필 데이터 타입 정의
+export interface Profile {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  email: string;
+  role: UserRole;
+}
+
+// 역할 라벨 매핑
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: '관리자',
+  staff: '스태프',
+};
+
 // 학생 데이터 타입 정의
 export interface Student {
   id: string;
