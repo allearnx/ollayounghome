@@ -491,7 +491,7 @@ export default function HomePage() {
             <div className="mt-2 flex justify-center gap-4 text-xs">
               <a href="/terms" className="hover:underline hover:text-[#424245]">이용약관</a>
               <span>|</span>
-              <a href="/privacy" className="hover:underline hover:text-[#424245]">개인정보처리방침</a>
+              <a href="/privacy" className="font-bold hover:underline hover:text-[#424245]">개인정보처리방침</a>
             </div>
           </div>
         </div>
