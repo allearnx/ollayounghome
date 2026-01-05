@@ -26,7 +26,16 @@ const menuItems = [
       { label: '올톡보카', href: '/courses/voca' },
     ]
   },
-  { label: '학습운영센터', href: '#', hasDropdown: false },
+  { 
+    label: '학습운영센터', 
+    href: '#',
+    hasDropdown: true,
+    dropdownItems: [
+      { label: '수강후기', href: '/reviews' },
+      { label: 'FAQ', href: '/faq' },
+      { label: '자료실', href: 'https://cafe.naver.com/', isExternal: true },
+    ]
+  },
 ];
 
 export default function Header() {
@@ -101,13 +110,20 @@ export default function Header() {
                         : 'opacity-0 invisible -translate-y-2'
                     }`}
                   >
-                    {item.dropdownItems.map((dropItem) => (
+                    {item.dropdownItems.map((dropItem: { label: string; href: string; isExternal?: boolean }) => (
                       <a
                         key={dropItem.label}
                         href={dropItem.href}
+                        target={dropItem.isExternal ? '_blank' : undefined}
+                        rel={dropItem.isExternal ? 'noopener noreferrer' : undefined}
                         className="block px-4 py-2.5 text-base font-medium text-[#1d1d1f] hover:text-[#0071e3] hover:bg-gray-50 transition-colors text-center"
                       >
                         {dropItem.label}
+                        {dropItem.isExternal && (
+                          <svg className="inline-block w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        )}
                       </a>
                     ))}
                   </div>
@@ -173,14 +189,21 @@ export default function Header() {
                   <div className={`overflow-hidden transition-all duration-200 ${
                     mobileOpenDropdown === item.label ? 'max-h-60' : 'max-h-0'
                   }`}>
-                    {item.dropdownItems?.map((dropItem) => (
+                    {item.dropdownItems?.map((dropItem: { label: string; href: string; isExternal?: boolean }) => (
                       <a
                         key={dropItem.label}
                         href={dropItem.href}
+                        target={dropItem.isExternal ? '_blank' : undefined}
+                        rel={dropItem.isExternal ? 'noopener noreferrer' : undefined}
                         className="block pl-8 pr-4 py-2.5 text-sm font-medium text-[#424245] hover:text-[#0071e3] transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {dropItem.label}
+                        {dropItem.isExternal && (
+                          <svg className="inline-block w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        )}
                       </a>
                     ))}
                   </div>

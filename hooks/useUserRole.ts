@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, UserRole, Profile } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
@@ -22,9 +22,10 @@ export function useUserRole(): UseUserRoleResult {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initialCheckDone = useRef(false);
 
   // 프로필 가져오기
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = async (userId: string, userEmail: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -39,7 +40,7 @@ export function useUserRole(): UseUserRoleResult {
           id: userId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          email: user?.email || '',
+          email: userEmail,
           role: 'staff',
         });
         return;
@@ -53,27 +54,35 @@ export function useUserRole(): UseUserRoleResult {
         id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email: user?.email || '',
+        email: userEmail,
         role: 'staff',
       });
     }
-  }, [user?.email]);
+  };
 
-  // 인증 상태 확인
+  // 인증 상태 확인 (한 번만 실행)
   useEffect(() => {
+    if (initialCheckDone.current) return;
+    initialCheckDone.current = true;
+
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setUser(null);
-        setProfile(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          setUser(null);
+          setProfile(null);
+          setIsLoading(false);
+          return;
+        }
+        
+        setUser(session.user);
+        await fetchProfile(session.user.id, session.user.email || '');
         setIsLoading(false);
-        return;
+      } catch (err) {
+        console.error('Auth check error:', err);
+        setIsLoading(false);
       }
-      
-      setUser(session.user);
-      await fetchProfile(session.user.id);
-      setIsLoading(false);
     };
 
     checkAuth();
@@ -83,16 +92,16 @@ export function useUserRole(): UseUserRoleResult {
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
         setProfile(null);
-      } else {
+      } else if (event === 'SIGNED_IN' && session) {
         setUser(session.user);
-        await fetchProfile(session.user.id);
+        await fetchProfile(session.user.id, session.user.email || '');
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, []);
 
   // 로그아웃
   const logout = async () => {
@@ -103,7 +112,7 @@ export function useUserRole(): UseUserRoleResult {
   // 프로필 다시 가져오기
   const refetchProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user.email || '');
     }
   };
 
@@ -134,4 +143,3 @@ export function hasAccess(userRole: UserRole | null, requiredRole: UserRole): bo
   
   return false;
 }
-

@@ -193,3 +193,85 @@ CREATE TRIGGER on_auth_user_created
 -- 'admin': 모든 권한 (결제/매출 관리 포함)
 -- 'staff': 결제/매출 제외 운영 권한
 
+-- ============================================
+-- 수강후기 테이블 (reviews)
+-- ============================================
+CREATE TABLE IF NOT EXISTS reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    title TEXT NOT NULL,
+    image_url TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    is_visible BOOLEAN DEFAULT true
+);
+
+-- 인덱스
+CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_display_order ON reviews(display_order);
+
+-- RLS 정책
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- 모든 사용자가 조회 가능 (공개 정보)
+CREATE POLICY "Anyone can view reviews" ON reviews
+    FOR SELECT
+    USING (true);
+
+-- 인증된 사용자만 추가/수정/삭제 가능 (관리자/스태프용)
+CREATE POLICY "Authenticated users can insert reviews" ON reviews
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can update reviews" ON reviews
+    FOR UPDATE
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can delete reviews" ON reviews
+    FOR DELETE
+    USING (auth.role() = 'authenticated');
+
+-- ============================================
+-- FAQ 테이블 (faqs)
+-- ============================================
+CREATE TABLE IF NOT EXISTS faqs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    display_order INTEGER DEFAULT 0,
+    is_visible BOOLEAN DEFAULT true
+);
+
+-- 인덱스
+CREATE INDEX IF NOT EXISTS idx_faqs_created_at ON faqs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_faqs_category ON faqs(category);
+CREATE INDEX IF NOT EXISTS idx_faqs_display_order ON faqs(display_order);
+
+-- RLS 정책
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+
+-- 모든 사용자가 조회 가능 (공개 정보)
+CREATE POLICY "Anyone can view faqs" ON faqs
+    FOR SELECT
+    USING (true);
+
+-- 인증된 사용자만 추가/수정/삭제 가능 (관리자/스태프용)
+CREATE POLICY "Authenticated users can insert faqs" ON faqs
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can update faqs" ON faqs
+    FOR UPDATE
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can delete faqs" ON faqs
+    FOR DELETE
+    USING (auth.role() = 'authenticated');
+
+-- FAQ 카테고리 설명:
+-- 'general': 일반
+-- 'enrollment': 수강신청
+-- 'payment': 결제문의
+-- 'refund': 환불
+
