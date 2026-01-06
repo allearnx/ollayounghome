@@ -13,6 +13,7 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<CourseWithTeacher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<CourseWithTeacher | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CourseCategory | 'all'>('all');
 
   // 강의 목록 불러오기
   const fetchCourses = useCallback(async () => {
@@ -78,6 +79,11 @@ export default function CoursesPage() {
     }
   };
 
+  // 필터된 강의 목록
+  const filteredCourses = selectedCategory === 'all' 
+    ? courses 
+    : courses.filter(c => c.category === selectedCategory);
+
   return (
     <AdminLayout>
       {/* 헤더 액션 */}
@@ -94,15 +100,36 @@ export default function CoursesPage() {
         </Link>
       </div>
 
-      {/* 통계 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      {/* 카테고리 필터 */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {/* 전체 */}
+        <button
+          onClick={() => setSelectedCategory('all')}
+          className={`rounded-xl p-4 border transition-all text-left ${
+            selectedCategory === 'all'
+              ? 'bg-violet-500 border-violet-500 shadow-lg shadow-violet-200'
+              : 'bg-white border-violet-100 hover:border-violet-300 shadow-sm'
+          }`}
+        >
+          <p className={`text-xs font-medium mb-1 ${selectedCategory === 'all' ? 'text-violet-200' : 'text-slate-500'}`}>전체</p>
+          <p className={`text-2xl font-bold ${selectedCategory === 'all' ? 'text-white' : 'text-slate-800'}`}>{courses.length}</p>
+        </button>
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
           const count = courses.filter(c => c.category === key).length;
+          const isSelected = selectedCategory === key;
           return (
-            <div key={key} className="bg-white rounded-xl p-4 border border-violet-100 shadow-sm">
-              <p className="text-xs font-medium text-slate-500 mb-1">{label}</p>
-              <p className="text-3xl font-bold text-slate-800">{count}</p>
-            </div>
+            <button
+              key={key}
+              onClick={() => setSelectedCategory(key as CourseCategory)}
+              className={`rounded-xl p-4 border transition-all text-left ${
+                isSelected
+                  ? 'bg-violet-500 border-violet-500 shadow-lg shadow-violet-200'
+                  : 'bg-white border-violet-100 hover:border-violet-300 shadow-sm'
+              }`}
+            >
+              <p className={`text-xs font-medium mb-1 ${isSelected ? 'text-violet-200' : 'text-slate-500'}`}>{label}</p>
+              <p className={`text-2xl font-bold ${isSelected ? 'text-white' : 'text-slate-800'}`}>{count}</p>
+            </button>
           );
         })}
       </div>
@@ -119,14 +146,16 @@ export default function CoursesPage() {
               <p className="text-slate-500 text-sm">데이터를 불러오는 중...</p>
             </div>
           </div>
-        ) : courses.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-100 rounded-full mb-4">
-              <svg className="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        ) : filteredCourses.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-slate-100 rounded-full mb-4">
+              <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <p className="text-slate-600 font-medium mb-1">등록된 강의가 없습니다</p>
+            <p className="text-slate-600 font-medium mb-1">
+              {selectedCategory === 'all' ? '등록된 강의가 없습니다' : `${CATEGORY_LABELS[selectedCategory]} 강의가 없습니다`}
+            </p>
             <p className="text-slate-400 text-sm mb-4">새 강의를 등록해주세요</p>
             <Link
               href="/admin/courses/new"
@@ -151,7 +180,7 @@ export default function CoursesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {courses.map(course => (
+                {filteredCourses.map(course => (
                   <tr key={course.id} className="bg-white hover:bg-slate-50 transition-colors">
                     <td className="py-2.5 px-4">
                       <p className="font-medium text-slate-800 truncate max-w-[200px]">{course.title}</p>
@@ -198,7 +227,11 @@ export default function CoursesPage() {
       </div>
 
       <div className="mt-4 text-right text-sm text-slate-500">
-        총 <strong className="text-slate-700">{courses.length}</strong>개의 강의
+        {selectedCategory === 'all' ? (
+          <>총 <strong className="text-slate-700">{courses.length}</strong>개의 강의</>
+        ) : (
+          <>{CATEGORY_LABELS[selectedCategory]} <strong className="text-slate-700">{filteredCourses.length}</strong>개 (전체 {courses.length}개)</>
+        )}
       </div>
 
       {/* 삭제 확인 모달 */}

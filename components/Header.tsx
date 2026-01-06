@@ -15,6 +15,7 @@ const menuItems = [
     ]
   },
   { label: '시간표', href: '/schedule', hasDropdown: false },
+  { label: '선생님 소개', href: '/teachers', hasDropdown: false },
   { 
     label: '전체 강의', 
     href: '#',
