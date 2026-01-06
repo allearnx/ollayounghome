@@ -64,7 +64,7 @@ export default function TeachersPage() {
               <p className="text-[#86868b]">곧 멋진 선생님들을 소개해드릴게요!</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {teachers.map((teacher) => (
                 <a
                   key={teacher.id}
