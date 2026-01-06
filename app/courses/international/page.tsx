@@ -73,7 +73,7 @@ export default function InternationalCoursesPage() {
               <p className="text-[#86868b]">곧 멋진 강의로 찾아뵙겠습니다!</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-16">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-24">
               {courses.map((course) => (
                 <a
                   key={course.id}
