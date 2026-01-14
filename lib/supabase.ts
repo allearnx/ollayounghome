@@ -121,12 +121,8 @@ export const REVIEW_GRADE_OPTIONS = [
   '초4', '초5', '초6',
   '중1', '중2', '중3',
   '고1', '고2', '고3',
-];
-
-// FAQ 카테고리 타입
-export type FAQCategory = 'general' | 'enrollment' | 'payment' | 'refund';
-
-// FAQ 데이터 타입 정의
+];// FAQ 카테고리 타입
+export type FAQCategory = 'general' | 'enrollment' | 'payment' | 'refund';// FAQ 데이터 타입 정의
 export interface FAQ {
   id: string;
   created_at: string;
@@ -144,4 +140,3 @@ export const FAQ_CATEGORY_LABELS: Record<FAQCategory, string> = {
   payment: '결제문의',
   refund: '환불',
 };
-

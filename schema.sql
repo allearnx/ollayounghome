@@ -61,9 +61,7 @@ CREATE TABLE IF NOT EXISTS teachers (
 );
 
 -- 인덱스
-CREATE INDEX IF NOT EXISTS idx_teachers_created_at ON teachers(created_at DESC);
-
--- RLS 정책
+CREATE INDEX IF NOT EXISTS idx_teachers_created_at ON teachers(created_at DESC);-- RLS 정책
 ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
 
 -- 모든 사용자가 조회 가능 (공개 정보)
@@ -203,9 +201,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     image_url TEXT NOT NULL,
     display_order INTEGER DEFAULT 0,
     is_visible BOOLEAN DEFAULT true
-);
-
--- 인덱스
+);-- 인덱스
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reviews_display_order ON reviews(display_order);
 
@@ -275,3 +271,53 @@ CREATE POLICY "Authenticated users can delete faqs" ON faqs
 -- 'payment': 결제문의
 -- 'refund': 환불
 
+-- ============================================
+-- 결제 테이블 (payments) - 토스페이먼츠 연동
+-- ============================================
+CREATE TABLE IF NOT EXISTS payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    student_id UUID REFERENCES students(id) ON DELETE SET NULL,
+    course_id UUID REFERENCES courses(id) ON DELETE SET NULL,
+    order_id TEXT UNIQUE NOT NULL,              -- 토스페이먼츠 주문번호 (상점에서 생성)
+    payment_key TEXT,                            -- 토스페이먼츠 결제키 (결제 완료 후 발급)
+    amount INTEGER NOT NULL,                     -- 결제 금액
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled', 'failed')),
+    method TEXT,                                 -- 결제수단 (카드, 계좌이체, 가상계좌 등)
+    receipt_url TEXT,                            -- 영수증 URL
+    paid_at TIMESTAMP WITH TIME ZONE,            -- 결제 완료 시간
+    customer_name TEXT,                          -- 결제자 이름
+    customer_phone TEXT                          -- 결제자 연락처
+);
+
+-- 인덱스
+CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_payments_course_id ON payments(course_id);
+CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+
+-- RLS 정책
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
+-- 모든 사용자가 자신의 결제 조회 가능 (order_id로 조회)
+CREATE POLICY "Anyone can view payments by order_id" ON payments
+    FOR SELECT
+    USING (true);
+
+-- 결제 생성은 누구나 가능 (결제 요청 시)
+CREATE POLICY "Anyone can insert payments" ON payments
+    FOR INSERT
+    WITH CHECK (true);
+
+-- 결제 상태 업데이트는 누구나 가능 (웹훅/콜백에서 사용)
+CREATE POLICY "Anyone can update payments" ON payments
+    FOR UPDATE
+    USING (true);
+
+-- 결제 상태값 설명:
+-- 'pending': 결제 대기 중 (결제 링크 생성됨)
+-- 'paid': 결제 완료
+-- 'cancelled': 결제 취소
+-- 'failed': 결제 실패
