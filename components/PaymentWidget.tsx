@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 
 interface PaymentWidgetProps {
   amount: number;
@@ -20,69 +19,43 @@ export default function PaymentWidget({
   customerName,
   customerPhone,
   customerEmail,
-  onFail,
 }: PaymentWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     setIsLoading(true);
-    setError(null);
 
-    try {
-      const tossPayments = await loadTossPayments(clientKey);
-      
-      // payment 인스턴스 생성 (비회원 결제)
-      const payment = tossPayments.payment({ customerKey: ANONYMOUS });
-      
-      // 결제창 호출
-      await payment.requestPayment({
-        method: 'CARD', // 카드 결제
-        amount: {
-          value: amount,
-          currency: 'KRW',
-        },
-        orderId,
-        orderName,
-        customerName: customerName || '고객',
-        customerMobilePhone: customerPhone?.replace(/-/g, ''),
-        customerEmail: customerEmail || undefined,
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
-      });
-    } catch (err: unknown) {
-      const error = err as { code?: string; message?: string };
-      console.error('Payment request failed:', error);
-      
-      if (error.code === 'USER_CANCEL') {
-        setError('결제가 취소되었습니다.');
-      } else {
-        setError(error.message || '결제 요청 중 오류가 발생했습니다.');
-      }
+    // URL 파라미터 구성
+    const successUrl = `${window.location.origin}/payment/success`;
+    const failUrl = `${window.location.origin}/payment/fail`;
 
-      if (onFail) {
-        onFail(error.code || 'UNKNOWN', error.message || '알 수 없는 오류');
-      }
-    } finally {
-      setIsLoading(false);
+    const params = new URLSearchParams({
+      clientKey,
+      orderId,
+      orderName,
+      amount: amount.toString(),
+      currency: 'KRW',
+      method: '카드',
+      successUrl,
+      failUrl,
+    });
+
+    // 선택적 파라미터 추가
+    if (customerName) {
+      params.append('customerName', customerName);
     }
-  };
+    if (customerPhone) {
+      params.append('customerMobilePhone', customerPhone.replace(/-/g, ''));
+    }
+    if (customerEmail) {
+      params.append('customerEmail', customerEmail);
+    }
 
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-        <p className="text-red-600 text-sm">{error}</p>
-        <button
-          onClick={() => setError(null)}
-          className="mt-2 text-sm text-red-500 underline"
-        >
-          다시 시도
-        </button>
-      </div>
-    );
-  }
+    // 토스페이먼츠 결제 페이지로 리다이렉트
+    window.location.href = `https://api.tosspayments.com/v1/payments?${params.toString()}`;
+  };
 
   return (
     <div className="space-y-4">
@@ -142,7 +115,7 @@ export default function PaymentWidget({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            결제창 로딩 중...
+            결제창 이동 중...
           </span>
         ) : (
           `${amount.toLocaleString()}원 결제하기`
