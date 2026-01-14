@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
+import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 
 interface PaymentWidgetProps {
   amount: number;
@@ -34,8 +34,11 @@ export default function PaymentWidget({
     try {
       const tossPayments = await loadTossPayments(clientKey);
       
+      // payment 인스턴스 생성 (비회원 결제)
+      const payment = tossPayments.payment({ customerKey: ANONYMOUS });
+      
       // 결제창 호출
-      await tossPayments.requestPayment({
+      await payment.requestPayment({
         method: '카드', // 카드 결제
         amount: {
           value: amount,
