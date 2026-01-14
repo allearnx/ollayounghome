@@ -39,7 +39,7 @@ export default function PaymentWidget({
       
       // 결제창 호출
       await payment.requestPayment({
-        method: '카드', // 카드 결제
+        method: 'CARD', // 카드 결제
         amount: {
           value: amount,
           currency: 'KRW',
