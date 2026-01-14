@@ -49,16 +49,19 @@ export default function PaymentWidget({
 
   // TossPayments 스크립트 로드
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.TossPayments) {
-      const script = document.createElement('script');
-      script.src = 'https://js.tosspayments.com/v1/payment';
-      script.async = true;
-      script.onload = () => setIsScriptLoaded(true);
-      script.onerror = () => setError('결제 모듈을 불러오는데 실패했습니다.');
-      document.head.appendChild(script);
-    } else if (window.TossPayments) {
+    if (typeof window === 'undefined') return;
+    
+    if ('TossPayments' in window) {
       setIsScriptLoaded(true);
+      return;
     }
+
+    const script = document.createElement('script');
+    script.src = 'https://js.tosspayments.com/v1/payment';
+    script.async = true;
+    script.onload = () => setIsScriptLoaded(true);
+    script.onerror = () => setError('결제 모듈을 불러오는데 실패했습니다.');
+    document.head.appendChild(script);
   }, []);
 
   const handlePayment = async () => {
