@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy initialization to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 // POST: 토스페이먼츠 웹훅 수신
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
+  
   try {
     const body = await request.json();
     
@@ -18,17 +23,17 @@ export async function POST(request: NextRequest) {
     // 이벤트 타입에 따른 처리
     switch (eventType) {
       case 'PAYMENT_STATUS_CHANGED':
-        await handlePaymentStatusChanged(data);
+        await handlePaymentStatusChanged(supabase, data);
         break;
 
       case 'DEPOSIT_CALLBACK':
         // 가상계좌 입금 완료
-        await handleVirtualAccountDeposit(data);
+        await handleVirtualAccountDeposit(supabase, data);
         break;
 
       case 'CANCEL_STATUS_CHANGED':
         // 결제 취소 상태 변경
-        await handleCancelStatusChanged(data);
+        await handleCancelStatusChanged(supabase, data);
         break;
 
       default:
@@ -46,13 +51,16 @@ export async function POST(request: NextRequest) {
 }
 
 // 결제 상태 변경 처리
-async function handlePaymentStatusChanged(data: {
-  orderId: string;
-  status: string;
-  transactionKey?: string;
-  paymentKey?: string;
-  secret?: string;
-}) {
+async function handlePaymentStatusChanged(
+  supabase: SupabaseClient,
+  data: {
+    orderId: string;
+    status: string;
+    transactionKey?: string;
+    paymentKey?: string;
+    secret?: string;
+  }
+) {
   const { orderId, status, paymentKey } = data;
 
   // 상태 매핑
@@ -116,12 +124,15 @@ async function handlePaymentStatusChanged(data: {
 }
 
 // 가상계좌 입금 완료 처리
-async function handleVirtualAccountDeposit(data: {
-  orderId: string;
-  status: string;
-  secret?: string;
-}) {
-  const { orderId, status, secret } = data;
+async function handleVirtualAccountDeposit(
+  supabase: SupabaseClient,
+  data: {
+    orderId: string;
+    status: string;
+    secret?: string;
+  }
+) {
+  const { orderId, status } = data;
 
   if (status === 'DONE') {
     // 입금 완료 - secret 값 검증 후 처리
@@ -160,11 +171,14 @@ async function handleVirtualAccountDeposit(data: {
 }
 
 // 결제 취소 상태 변경 처리
-async function handleCancelStatusChanged(data: {
-  orderId: string;
-  paymentKey: string;
-  cancelStatus: string;
-}) {
+async function handleCancelStatusChanged(
+  supabase: SupabaseClient,
+  data: {
+    orderId: string;
+    paymentKey: string;
+    cancelStatus: string;
+  }
+) {
   const { orderId, cancelStatus } = data;
 
   if (cancelStatus === 'DONE') {

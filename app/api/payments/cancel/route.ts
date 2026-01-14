@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy initialization to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY!;
+function getTossSecretKey() {
+  return process.env.TOSS_SECRET_KEY!;
+}
 
 // POST: 결제 취소 (전액/부분)
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
+    const TOSS_SECRET_KEY = getTossSecretKey();
+    
     const body = await request.json();
     const { paymentKey, cancelReason, cancelAmount, refundReceiveAccount } = body;
 

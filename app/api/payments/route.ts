@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy initialization to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 // 주문 ID 생성 함수
 function generateOrderId(): string {
@@ -16,6 +19,7 @@ function generateOrderId(): string {
 // POST: 결제 주문 생성
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const body = await request.json();
     const { studentId, courseId, amount, customerName, customerPhone } = body;
 
@@ -68,6 +72,7 @@ export async function POST(request: NextRequest) {
 // GET: 결제 정보 조회
 export async function GET(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('orderId');
 

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY!;
+// Lazy initialization to avoid build-time errors
+function getTossSecretKey() {
+  return process.env.TOSS_SECRET_KEY!;
+}
 
 // GET: 토스페이먼츠 결제 상세 조회
 export async function GET(request: NextRequest) {
   try {
+    const TOSS_SECRET_KEY = getTossSecretKey();
     const { searchParams } = new URL(request.url);
     const paymentKey = searchParams.get('paymentKey');
 
