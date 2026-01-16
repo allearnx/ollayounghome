@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
       const verified = await fetchTossPayment(data.paymentKey);
       if (!verified.ok) {
         console.error('Webhook verification failed (toss inquiry):', verified.data);
-        return NextResponse.json({ success: false }, { status: 200 });
+        // 토스 재조회가 실패하면 일시 장애일 수 있으니 재전송을 유도한다.
+        return NextResponse.json({ success: false }, { status: 500 });
       }
       if (verified.data.orderId && data.orderId && verified.data.orderId !== data.orderId) {
         console.error('Webhook mismatch: orderId does not match toss record', {
@@ -76,9 +77,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    // 에러가 발생해도 200을 반환하여 재전송 방지
-    // (실제 운영에서는 로깅 후 별도 처리 필요)
-    return NextResponse.json({ success: false, error: 'Internal error' });
+    // 웹훅 처리에 실패하면 non-2xx를 반환해 토스가 재전송할 수 있게 함.
+    // (토스는 최대 7회 재전송)
+    return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
   }
 }
 
@@ -95,18 +96,6 @@ async function handlePaymentStatusChanged(
 ) {
   const { orderId, status, paymentKey } = data;
 
-  // idempotency: 이미 paid/cancelled/failure로 끝난 건은 덮어쓰지 않음 (pending -> terminal만 허용)
-  const { data: existing } = await supabase
-    .from('payments')
-    .select('status')
-    .eq('order_id', orderId)
-    .maybeSingle();
-  const existingStatus = existing?.status as string | undefined;
-  if (existingStatus && ['paid', 'cancelled', 'failed'].includes(existingStatus)) {
-    console.log(`Skip webhook update (already terminal): ${orderId} -> ${existingStatus}`);
-    return;
-  }
-
   // 상태 매핑
   let dbStatus: string;
   switch (status) {
@@ -122,6 +111,30 @@ async function handlePaymentStatusChanged(
       break;
     default:
       dbStatus = 'pending';
+  }
+
+  // idempotency / transition rules:
+  // - paid는 "취소"로 바뀔 수 있으므로 terminal로 취급하면 안 됨 (paid -> cancelled 허용)
+  // - cancelled/failed는 terminal로 보고 덮어쓰지 않음
+  const { data: existing } = await supabase
+    .from('payments')
+    .select('status')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  const existingStatus = existing?.status as string | undefined;
+  if (existingStatus) {
+    if (existingStatus === dbStatus) {
+      console.log(`Skip webhook update (no change): ${orderId} stays ${existingStatus}`);
+      return;
+    }
+    if (['cancelled', 'failed'].includes(existingStatus)) {
+      console.log(`Skip webhook update (already terminal): ${orderId} -> ${existingStatus}`);
+      return;
+    }
+    if (existingStatus === 'paid' && dbStatus === 'pending') {
+      console.log(`Skip webhook update (invalid transition): ${orderId} paid -> pending`);
+      return;
+    }
   }
 
   // DB 업데이트

@@ -12,6 +12,14 @@ interface PaymentWidgetProps {
   onFail?: (errorCode: string, errorMessage: string) => void;
 }
 
+type PaymentServerInfo = {
+  order_id: string;
+  amount: number;
+  status: string;
+  courses: { title: string } | null;
+  students?: { student_name: string } | null;
+};
+
 declare global {
   interface Window {
     TossPayments: (clientKey: string) => {
@@ -43,6 +51,8 @@ export default function PaymentWidget({
 }: PaymentWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [serverInfo, setServerInfo] = useState<PaymentServerInfo | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
@@ -64,6 +74,35 @@ export default function PaymentWidget({
     document.head.appendChild(script);
   }, []);
 
+  // 결제 직전/표시용: 서버(DB)에 저장된 주문 정보로 금액/주문명 동기화
+  useEffect(() => {
+    if (!orderId) return;
+    let isMounted = true;
+    (async () => {
+      try {
+        setIsRefreshing(true);
+        const res = await fetch(`/api/payments?orderId=${encodeURIComponent(orderId)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '결제 정보를 불러올 수 없습니다.');
+        if (isMounted) setServerInfo(data as PaymentServerInfo);
+      } catch (e) {
+        console.error('Failed to sync payment info:', e);
+        // 표시/결제에 치명적이면 버튼 클릭 시 다시 막는다.
+      } finally {
+        if (isMounted) setIsRefreshing(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [orderId]);
+
+  const resolvedAmount = serverInfo?.amount ?? amount;
+  const resolvedOrderName =
+    serverInfo?.courses?.title ||
+    (serverInfo?.students?.student_name ? `${serverInfo.students.student_name} 수강료` : null) ||
+    orderName;
+
   const handlePayment = async () => {
     if (!isScriptLoaded || !window.TossPayments) {
       setError('결제 모듈이 로드되지 않았습니다.');
@@ -74,12 +113,35 @@ export default function PaymentWidget({
     setError(null);
 
     try {
+      // 결제 직전에 한 번 더 서버 값으로 재검증 (금액/상태 불일치 사고 방지)
+      setIsRefreshing(true);
+      const res = await fetch(`/api/payments?orderId=${encodeURIComponent(orderId)}`);
+      const latest = await res.json();
+      if (!res.ok) {
+        throw new Error(latest?.error || '결제 정보를 다시 확인할 수 없습니다.');
+      }
+      const latestInfo = latest as PaymentServerInfo;
+      setServerInfo(latestInfo);
+
+      if (latestInfo.status === 'paid') {
+        setError('이미 결제가 완료된 주문입니다.');
+        return;
+      }
+      if (latestInfo.status === 'cancelled') {
+        setError('취소된 주문입니다.');
+        return;
+      }
+      if (latestInfo.status === 'failed') {
+        setError('결제에 실패한 주문입니다. 다시 시도해주세요.');
+        return;
+      }
+
       const tossPayments = window.TossPayments(clientKey);
-      
+
       await tossPayments.requestPayment('카드', {
-        amount,
-        orderId,
-        orderName,
+        amount: latestInfo.amount,
+        orderId: latestInfo.order_id,
+        orderName: latestInfo.courses?.title || resolvedOrderName,
         customerName: customerName || '고객',
         customerMobilePhone: customerPhone?.replace(/-/g, ''),
         customerEmail: customerEmail || undefined,
@@ -100,6 +162,7 @@ export default function PaymentWidget({
         onFail(error.code || 'UNKNOWN', error.message || '알 수 없는 오류');
       }
     } finally {
+      setIsRefreshing(false);
       setIsLoading(false);
     }
   };
@@ -125,7 +188,7 @@ export default function PaymentWidget({
         <div className="flex justify-between items-center">
           <span className="text-slate-600">결제 금액</span>
           <span className="text-2xl font-bold text-violet-600">
-            {amount.toLocaleString()}원
+            {resolvedAmount.toLocaleString()}원
           </span>
         </div>
       </div>
@@ -147,12 +210,12 @@ export default function PaymentWidget({
       {/* 결제 버튼 */}
       <button
         onClick={handlePayment}
-        disabled={isLoading || !isScriptLoaded}
+        disabled={isLoading || isRefreshing || !isScriptLoaded}
         className={`
           w-full py-4 rounded-xl font-semibold text-white text-lg
           transition-all duration-200
           ${
-            !isLoading && isScriptLoaded
+            !isLoading && !isRefreshing && isScriptLoaded
               ? 'bg-violet-600 hover:bg-violet-700 active:scale-[0.98]'
               : 'bg-slate-300 cursor-not-allowed'
           }
@@ -178,10 +241,12 @@ export default function PaymentWidget({
             </svg>
             결제창 로딩 중...
           </span>
+        ) : isRefreshing ? (
+          '결제 정보 확인 중...'
         ) : !isScriptLoaded ? (
           '결제 모듈 로딩 중...'
         ) : (
-          `${amount.toLocaleString()}원 결제하기`
+          `${resolvedAmount.toLocaleString()}원 결제하기`
         )}
       </button>
     </div>

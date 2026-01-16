@@ -134,7 +134,8 @@ export async function GET(request: NextRequest) {
         status,
         customer_name,
         customer_phone,
-        courses (id, title, price)
+        courses (id, title, price),
+        students (id, student_name)
       `)
       .eq('order_id', orderId)
       .single();
