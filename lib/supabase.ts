@@ -1,21 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const FALLBACK_SUPABASE_URL = 'https://jtsfnnruhykytwsghtvx.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0c2ZubnJ1aHlreXR3c2dodHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU2NTYsImV4cCI6MjA4MjgzMTY1Nn0.CQ8U_urOADw2Nx1u45lh6dUqHqB9tuMcx7HloXp7VC4';
-
 const normalize = (v: string | undefined) => (v ?? '').trim();
-const looksLikeSupabaseUrl = (v: string) =>
-  /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(v);
+const supabaseUrl = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseAnonKey = normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-const envSupabaseUrl = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const envSupabaseAnonKey = normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-// 환경변수가 잘못 들어가도 앱이 무한로딩에 빠지지 않도록 최소 검증 후 fallback 사용
-const supabaseUrl = looksLikeSupabaseUrl(envSupabaseUrl)
-  ? envSupabaseUrl.replace(/\/$/, '')
-  : FALLBACK_SUPABASE_URL;
-const supabaseAnonKey = envSupabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY;
+// Client-side supabase client (anon key). Do NOT hardcode keys in repo.
+// If these are missing in production, we want it to fail fast.
+if (!supabaseUrl) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+}
+if (!supabaseAnonKey) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
