@@ -24,14 +24,23 @@ export function useUserRole(): UseUserRoleResult {
   const [isLoading, setIsLoading] = useState(true);
   const initialCheckDone = useRef(false);
 
+  const withTimeout = async <T,>(promiseLike: PromiseLike<T>, ms: number): Promise<T> => {
+    const promise = Promise.resolve(promiseLike);
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`timeout_after_${ms}ms`)), ms)
+      ),
+    ]);
+  };
+
   // 프로필 가져오기
   const fetchProfile = async (userId: string, userEmail: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await withTimeout(
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        7000
+      );
 
       if (error) {
         // 프로필이 없으면 기본값으로 staff 설정
@@ -67,7 +76,9 @@ export function useUserRole(): UseUserRoleResult {
 
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await withTimeout(supabase.auth.getSession(), 7000);
         
         if (!session) {
           setUser(null);
@@ -81,6 +92,8 @@ export function useUserRole(): UseUserRoleResult {
         setIsLoading(false);
       } catch (err) {
         console.error('Auth check error:', err);
+        setUser(null);
+        setProfile(null);
         setIsLoading(false);
       }
     };

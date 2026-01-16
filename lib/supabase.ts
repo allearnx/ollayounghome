@@ -1,7 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jtsfnnruhykytwsghtvx.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0c2ZubnJ1aHlreXR3c2dodHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU2NTYsImV4cCI6MjA4MjgzMTY1Nn0.CQ8U_urOADw2Nx1u45lh6dUqHqB9tuMcx7HloXp7VC4';
+const FALLBACK_SUPABASE_URL = 'https://jtsfnnruhykytwsghtvx.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0c2ZubnJ1aHlreXR3c2dodHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU2NTYsImV4cCI6MjA4MjgzMTY1Nn0.CQ8U_urOADw2Nx1u45lh6dUqHqB9tuMcx7HloXp7VC4';
+
+const normalize = (v: string | undefined) => (v ?? '').trim();
+const looksLikeSupabaseUrl = (v: string) =>
+  /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(v);
+
+const envSupabaseUrl = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const envSupabaseAnonKey = normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+// 환경변수가 잘못 들어가도 앱이 무한로딩에 빠지지 않도록 최소 검증 후 fallback 사용
+const supabaseUrl = looksLikeSupabaseUrl(envSupabaseUrl)
+  ? envSupabaseUrl.replace(/\/$/, '')
+  : FALLBACK_SUPABASE_URL;
+const supabaseAnonKey = envSupabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -114,9 +128,7 @@ export interface Review {
   achievement?: string;    // 성과 (선택, 예: "중간고사 100점!")
   display_order: number;
   is_visible: boolean;
-}
-
-// 후기용 학년 옵션 (간단한 표시용)
+}// 후기용 학년 옵션 (간단한 표시용)
 export const REVIEW_GRADE_OPTIONS = [
   '초4', '초5', '초6',
   '중1', '중2', '중3',
@@ -131,9 +143,7 @@ export interface FAQ {
   category: FAQCategory;
   display_order: number;
   is_visible: boolean;
-}
-
-// FAQ 카테고리 라벨 매핑
+}// FAQ 카테고리 라벨 매핑
 export const FAQ_CATEGORY_LABELS: Record<FAQCategory, string> = {
   general: '일반',
   enrollment: '수강신청',
