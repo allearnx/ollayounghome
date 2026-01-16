@@ -113,35 +113,43 @@ export default function PaymentsPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    
-    // 결제 내역 조회
-    const { data: paymentsData } = await supabase
-      .from('payments')
-      .select(`
-        *,
-        students (id, student_name, parent_phone),
-        courses (id, title, price)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(50);
 
-    // 학생 목록 조회
-    const { data: studentsData } = await supabase
-      .from('students')
-      .select('id, student_name, parent_phone, status')
-      .order('created_at', { ascending: false });
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    // 강좌 목록 조회
-    const { data: coursesData } = await supabase
-      .from('courses')
-      .select('id, title, price')
-      .order('title', { ascending: true });
+      if (!session?.access_token) {
+        setPayments([]);
+        setStudents([]);
+        setCourses([]);
+        setIsLoading(false);
+        return;
+      }
 
-    if (paymentsData) setPayments(paymentsData);
-    if (studentsData) setStudents(studentsData);
-    if (coursesData) setCourses(coursesData);
-    
-    setIsLoading(false);
+      const response = await fetch('/api/admin/overview?limit=50', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '데이터를 불러올 수 없습니다.');
+      }
+
+      setPayments(data.payments || []);
+      setStudents(data.students || []);
+      setCourses(data.courses || []);
+    } catch (err) {
+      console.error('Admin overview fetch error:', err);
+      setPayments([]);
+      setStudents([]);
+      setCourses([]);
+      alert(err instanceof Error ? err.message : '데이터를 불러올 수 없습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 청구서 생성
@@ -182,12 +190,7 @@ export default function PaymentsPage() {
       setGeneratedLink(paymentLink);
 
       // 학생 상태 업데이트
-      if (selectedStudent) {
-        await supabase
-          .from('students')
-          .update({ status: 'payment_requested' })
-          .eq('id', selectedStudent);
-      }
+      // 학생 상태는 /api/payments (서버)에서 처리됨
 
       // 목록 새로고침
       fetchData();
@@ -308,9 +311,19 @@ export default function PaymentsPage() {
     setIsProcessingRefund(true);
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('관리자 인증이 필요합니다.');
+      }
+
       const response = await fetch('/api/payments/cancel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           paymentKey: refundPayment.payment_key,
           cancelReason: refundReason,

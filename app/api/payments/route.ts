@@ -76,6 +76,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 학생 상태 업데이트 (서버에서만)
+    if (studentId) {
+      const { error: studentUpdateError } = await supabase
+        .from('students')
+        .update({ status: 'payment_requested' })
+        .eq('id', studentId);
+      if (studentUpdateError) {
+        console.error('Student status update error:', studentUpdateError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       orderId,

@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase.server';
 
-// Lazy initialization to avoid build-time errors
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+function getTossSecretKey() {
+  return process.env.TOSS_SECRET_KEY!;
+}
+
+async function fetchTossPayment(paymentKey: string) {
+  const secretKey = getTossSecretKey();
+  const authHeader = Buffer.from(`${secretKey}:`).toString('base64');
+
+  const res = await fetch(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Basic ${authHeader}`,
+    },
+  });
+
+  const data = await res.json();
+  return { ok: res.ok, status: res.status, data };
 }
 
 // POST: 토스페이먼츠 웹훅 수신
 export async function POST(request: NextRequest) {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
   
   try {
     const body = await request.json();
@@ -19,6 +31,26 @@ export async function POST(request: NextRequest) {
     console.log('Webhook received:', JSON.stringify(body, null, 2));
 
     const { eventType, data } = body;
+
+    // 운영 보안: webhook payload를 그대로 신뢰하지 않고 토스에 재조회하여 검증
+    // (서명 검증을 사용할 수 있으면 더 좋지만, 최소한 paymentKey/orderId 일치 검증을 한다)
+    if (data?.paymentKey) {
+      const verified = await fetchTossPayment(data.paymentKey);
+      if (!verified.ok) {
+        console.error('Webhook verification failed (toss inquiry):', verified.data);
+        return NextResponse.json({ success: false }, { status: 200 });
+      }
+      if (verified.data.orderId && data.orderId && verified.data.orderId !== data.orderId) {
+        console.error('Webhook mismatch: orderId does not match toss record', {
+          webhookOrderId: data.orderId,
+          tossOrderId: verified.data.orderId,
+        });
+        return NextResponse.json({ success: false }, { status: 200 });
+      }
+      // overwrite with verified minimal fields
+      data.status = verified.data.status ?? data.status;
+      data.orderId = verified.data.orderId ?? data.orderId;
+    }
 
     // 이벤트 타입에 따른 처리
     switch (eventType) {
@@ -62,6 +94,18 @@ async function handlePaymentStatusChanged(
   }
 ) {
   const { orderId, status, paymentKey } = data;
+
+  // idempotency: 이미 paid/cancelled/failure로 끝난 건은 덮어쓰지 않음 (pending -> terminal만 허용)
+  const { data: existing } = await supabase
+    .from('payments')
+    .select('status')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  const existingStatus = existing?.status as string | undefined;
+  if (existingStatus && ['paid', 'cancelled', 'failed'].includes(existingStatus)) {
+    console.log(`Skip webhook update (already terminal): ${orderId} -> ${existingStatus}`);
+    return;
+  }
 
   // 상태 매핑
   let dbStatus: string;

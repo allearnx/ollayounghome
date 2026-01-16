@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Lazy initialization to avoid build-time errors
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
 
 function getTossSecretKey() {
   return process.env.TOSS_SECRET_KEY!;
@@ -16,7 +9,8 @@ function getTossSecretKey() {
 // POST: 결제 취소 (전액/부분)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabase();
+    await requireAdmin(request);
+    const supabase = getSupabaseAdmin();
     const TOSS_SECRET_KEY = getTossSecretKey();
     
     const body = await request.json();
@@ -120,6 +114,9 @@ export async function POST(request: NextRequest) {
       totalCancels: data.cancels?.length || 0,
     });
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Payment cancel error:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
