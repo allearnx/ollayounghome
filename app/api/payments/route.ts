@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
 
 import { randomUUID } from 'crypto';
 
@@ -12,6 +13,9 @@ function generateOrderId(): string {
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
+    const authHeader = request.headers.get('authorization');
+    const isAdminRequest = !!authHeader;
+    const isAdmin = isAdminRequest ? await requireAdmin(request).then(() => true).catch(() => false) : false;
     const body = await request.json();
     const { studentId, courseId, amount, customerName, customerPhone } = body as {
       studentId?: string | null;
@@ -41,7 +45,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // public: enforce course price
       finalAmount = course.price;
+      // admin: allow custom amount if provided (e.g. partial payment / custom invoice)
+      if (isAdmin && amount && amount > 0) {
+        finalAmount = amount;
+      }
     }
 
     if (!finalAmount || finalAmount <= 0) {

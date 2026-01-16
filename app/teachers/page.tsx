@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import { supabase, Teacher } from '@/lib/supabase';
+import { Teacher } from '@/lib/domain';
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -10,17 +10,16 @@ export default function TeachersPage() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const { data, error } = await supabase
-        .from('teachers')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching teachers:', error);
-      } else {
+      try {
+        const response = await fetch('/api/public/teachers');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '선생님 목록을 불러오는데 실패했습니다.');
         setTeachers(data || []);
+      } catch (err) {
+        console.error('Error fetching teachers:', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchTeachers();

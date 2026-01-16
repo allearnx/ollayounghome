@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
-import { supabase, Teacher, Course, CATEGORY_LABELS } from '@/lib/supabase';
+import { Teacher, Course, CATEGORY_LABELS } from '@/lib/domain';
 
 export default function TeacherDetailPage() {
   const params = useParams();
@@ -16,31 +16,18 @@ export default function TeacherDetailPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 선생님 정보 불러오기
-      const { data: teacherData, error: teacherError } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('id', teacherId)
-        .single();
-
-      if (teacherError || !teacherData) {
-        console.error('Error fetching teacher:', teacherError);
+      try {
+        const response = await fetch(`/api/public/teachers/${teacherId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '선생님 정보를 불러올 수 없습니다.');
+        setTeacher(data.teacher);
+        setCourses(data.courses || []);
+      } catch (err) {
+        console.error('Error fetching teacher:', err);
         setNotFound(true);
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      setTeacher(teacherData);
-
-      // 해당 선생님의 강의 목록 불러오기
-      const { data: coursesData } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('teacher_id', teacherId)
-        .order('created_at', { ascending: false });
-
-      setCourses(coursesData || []);
-      setIsLoading(false);
     };
 
     if (teacherId) {

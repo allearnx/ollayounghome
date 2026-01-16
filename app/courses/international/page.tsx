@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import { supabase, Course, Teacher, CATEGORY_LABELS } from '@/lib/supabase';
+import { Course, Teacher, CATEGORY_LABELS } from '@/lib/domain';
 
 interface CourseWithTeacher extends Course {
   teachers: Teacher | null;
@@ -16,21 +16,13 @@ export default function InternationalCoursesPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const { data, error } = await supabase
-          .from('courses')
-          .select(`*, teachers (*)`)
-          .eq('category', 'international')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching courses:', error);
-          setError('강의 목록을 불러오는데 실패했습니다.');
-        } else {
-          setCourses(data || []);
-        }
+        const response = await fetch('/api/public/courses?category=international');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '강의 목록을 불러오는데 실패했습니다.');
+        setCourses(data || []);
       } catch (err) {
         console.error('Unexpected error:', err);
-        setError('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setError(err instanceof Error ? err.message : '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       } finally {
         setIsLoading(false);
       }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { supabase, GRADE_OPTIONS } from '@/lib/supabase';
+import { GRADE_OPTIONS } from '@/lib/domain';
 import Header from '@/components/Header';
 
 // Swiper
@@ -134,15 +134,19 @@ export default function HomePage() {
     setIsLoading(true);
 
     try {
-      const { error: dbError } = await supabase.from('students').insert({
-        student_name: studentName.trim(),
-        grade: studentGrade,
-        parent_phone: parentPhone,
-        status: 'new',
-        memo: '',
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_name: studentName.trim(),
+          grade: studentGrade,
+          parent_phone: parentPhone,
+        }),
       });
-
-      if (dbError) throw dbError;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
 
       setShowModal(true);
       setStudentName('');
@@ -150,7 +154,7 @@ export default function HomePage() {
       setParentPhone('');
     } catch (err) {
       console.error('Error:', err);
-      setError('신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setError(err instanceof Error ? err.message : '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }

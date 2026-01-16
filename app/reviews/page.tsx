@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, Review } from '@/lib/supabase';
+import { Review } from '@/lib/domain';
 import Header from '@/components/Header';
 
 export default function ReviewsPage() {
@@ -12,13 +12,9 @@ export default function ReviewsPage() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const { data, error } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('is_visible', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
+        const response = await fetch('/api/public/reviews');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '후기를 불러올 수 없습니다.');
         setReviews(data || []);
       } catch (err) {
         console.error('Error fetching reviews:', err);

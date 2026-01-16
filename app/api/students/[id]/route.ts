@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
 
 // PATCH: 학생 정보 업데이트 (상태, 메모)
 export async function PATCH(
@@ -7,6 +8,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAdmin(request);
+    const supabase = getSupabaseAdmin();
     const { id } = params;
     const body = await request.json();
 
@@ -49,6 +52,9 @@ export async function PATCH(
 
     return NextResponse.json(data);
   } catch (err) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Error updating student:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -60,6 +66,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAdmin(request);
+    const supabase = getSupabaseAdmin();
     const { id } = params;
 
     const { data, error } = await supabase
@@ -78,6 +86,9 @@ export async function GET(
 
     return NextResponse.json(data);
   } catch (err) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Error fetching student:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

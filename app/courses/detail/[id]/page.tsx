@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
-import { supabase, Course, Teacher, CATEGORY_LABELS } from '@/lib/supabase';
+import { Course, Teacher, CATEGORY_LABELS } from '@/lib/domain';
 import PaymentWidget from '@/components/PaymentWidget';
 
 interface CourseWithTeacher extends Course {
@@ -30,19 +30,17 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     const fetchCourse = async () => {
-      const { data, error } = await supabase
-        .from('courses')
-        .select(`*, teachers (*)`)
-        .eq('id', courseId)
-        .single();
-
-      if (error || !data) {
-        console.error('Error fetching course:', error);
-        setNotFound(true);
-      } else {
+      try {
+        const response = await fetch(`/api/public/courses/${courseId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '강좌 정보를 불러올 수 없습니다.');
         setCourse(data);
+      } catch (err) {
+        console.error('Error fetching course:', err);
+        setNotFound(true);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     if (courseId) {
@@ -77,7 +75,6 @@ export default function CourseDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId: course.id,
-          amount: course.price,
           customerName: customerName || null,
           customerPhone: customerPhone || null,
         }),

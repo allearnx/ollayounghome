@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { supabase, FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
+import { FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/domain';
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -14,13 +14,9 @@ export default function FAQPage() {
   useEffect(() => {
     const fetchFAQs = async () => {
       try {
-        const { data, error } = await supabase
-          .from('faqs')
-          .select('*')
-          .eq('is_visible', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
+        const response = await fetch('/api/public/faqs');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'FAQ를 불러올 수 없습니다.');
         setFaqs(data || []);
       } catch (err) {
         console.error('Error fetching FAQs:', err);

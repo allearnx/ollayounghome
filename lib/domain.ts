@@ -1,20 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-export * from './domain';
-
-const normalize = (v: string | undefined) => (v ?? '').trim();
-const supabaseUrl = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseAnonKey = normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-// Client-side supabase client (anon key). Do NOT hardcode keys in repo.
-// If these are missing in production, we want it to fail fast.
-if (!supabaseUrl) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
-}
-if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Domain types/constants without initializing Supabase clients.
 
 // 사용자 역할 타입 정의
 export type UserRole = 'admin' | 'staff';
@@ -111,7 +95,7 @@ export const GRADE_OPTIONS = [
 
 // 학년 값으로 짧은 라벨 가져오기
 export const getGradeShortLabel = (gradeValue: string): string => {
-  const grade = GRADE_OPTIONS.find(g => g.value === gradeValue);
+  const grade = GRADE_OPTIONS.find((g) => g.value === gradeValue);
   return grade ? grade.short : gradeValue;
 };
 
@@ -119,19 +103,21 @@ export const getGradeShortLabel = (gradeValue: string): string => {
 export interface Review {
   id: string;
   created_at: string;
-  grade: string;           // 학년 (예: "중2", "고1")
-  course_name: string;     // 수강 과정 (예: "내신 문법반")
-  content: string;         // 후기 내용
-  achievement?: string;    // 성과 (선택, 예: "중간고사 100점!")
+  grade: string; // 학년 (예: "중2", "고1")
+  course_name: string; // 수강 과정 (예: "내신 문법반")
+  content: string; // 후기 내용
+  achievement?: string; // 성과 (선택, 예: "중간고사 100점!")
   display_order: number;
   is_visible: boolean;
-}// 후기용 학년 옵션 (간단한 표시용)
-export const REVIEW_GRADE_OPTIONS = [
-  '초4', '초5', '초6',
-  '중1', '중2', '중3',
-  '고1', '고2', '고3',
-];// FAQ 카테고리 타입
-export type FAQCategory = 'general' | 'enrollment' | 'payment' | 'refund';// FAQ 데이터 타입 정의
+}
+
+// 후기용 학년 옵션 (간단한 표시용)
+export const REVIEW_GRADE_OPTIONS = ['초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
+
+// FAQ 카테고리 타입
+export type FAQCategory = 'general' | 'enrollment' | 'payment' | 'refund';
+
+// FAQ 데이터 타입 정의
 export interface FAQ {
   id: string;
   created_at: string;
@@ -140,10 +126,13 @@ export interface FAQ {
   category: FAQCategory;
   display_order: number;
   is_visible: boolean;
-}// FAQ 카테고리 라벨 매핑
+}
+
+// FAQ 카테고리 라벨 매핑
 export const FAQ_CATEGORY_LABELS: Record<FAQCategory, string> = {
   general: '일반',
   enrollment: '수강신청',
   payment: '결제문의',
   refund: '환불',
 };
+
