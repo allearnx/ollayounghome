@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { logTossWebhookError, logTossWebhookReceived, logTossWebhookResult } from '@/lib/webhookLog';
 
 function getTossSecretKey() {
   return process.env.TOSS_SECRET_KEY!;
@@ -24,25 +25,26 @@ async function fetchTossPayment(paymentKey: string) {
 // POST: 토스페이먼츠 웹훅 수신
 export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdmin();
+  const startedAt = Date.now();
+  let body: unknown = null;
   
   try {
-    const body = await request.json();
-    
-    console.log('Webhook received:', JSON.stringify(body, null, 2));
+    body = await request.json();
+    logTossWebhookReceived(body);
 
-    const { eventType, data } = body;
+    const { eventType, data } = body as { eventType?: string; data?: any };
 
     // 운영 보안: webhook payload를 그대로 신뢰하지 않고 토스에 재조회하여 검증
     // (서명 검증을 사용할 수 있으면 더 좋지만, 최소한 paymentKey/orderId 일치 검증을 한다)
     if (data?.paymentKey) {
       const verified = await fetchTossPayment(data.paymentKey);
       if (!verified.ok) {
-        console.error('Webhook verification failed (toss inquiry):', verified.data);
+        logTossWebhookResult(body, 'verify_failed', { tossStatus: verified.status });
         // 토스 재조회가 실패하면 일시 장애일 수 있으니 재전송을 유도한다.
         return NextResponse.json({ success: false }, { status: 500 });
       }
       if (verified.data.orderId && data.orderId && verified.data.orderId !== data.orderId) {
-        console.error('Webhook mismatch: orderId does not match toss record', {
+        logTossWebhookResult(body, 'verify_mismatch_orderId', {
           webhookOrderId: data.orderId,
           tossOrderId: verified.data.orderId,
         });
@@ -70,13 +72,14 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log('Unhandled webhook event type:', eventType);
+        logTossWebhookResult(body, 'unhandled_event', { eventType });
     }
 
     // 웹훅 수신 성공 응답 (10초 이내에 200 응답 필요)
+    logTossWebhookResult(body, 'ok', { durationMs: Date.now() - startedAt });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Webhook error:', error);
+    logTossWebhookError(body, error, { durationMs: Date.now() - startedAt });
     // 웹훅 처리에 실패하면 non-2xx를 반환해 토스가 재전송할 수 있게 함.
     // (토스는 최대 7회 재전송)
     return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
