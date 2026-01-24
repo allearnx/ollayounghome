@@ -132,8 +132,6 @@ export async function GET(request: NextRequest) {
         order_id,
         amount,
         status,
-        customer_name,
-        customer_phone,
         courses (id, title, price),
         students (id, student_name)
       `)

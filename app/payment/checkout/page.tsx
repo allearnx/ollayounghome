@@ -9,8 +9,6 @@ interface PaymentInfo {
   order_id: string;
   amount: number;
   status: string;
-  customer_name: string | null;
-  customer_phone: string | null;
   courses: { title: string } | null;
   students: { student_name: string } | null;
 }
@@ -136,8 +134,7 @@ function CheckoutContent() {
             amount={paymentInfo.amount}
             orderName={orderName}
             orderId={paymentInfo.order_id}
-            customerName={paymentInfo.customer_name || paymentInfo.students?.student_name || undefined}
-            customerPhone={paymentInfo.customer_phone || undefined}
+            customerName={paymentInfo.students?.student_name || undefined}
           />
         </div>
 
