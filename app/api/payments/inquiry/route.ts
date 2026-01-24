@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // Lazy initialization to avoid build-time errors
 function getTossSecretKey() {
   return process.env.TOSS_SECRET_KEY!;
