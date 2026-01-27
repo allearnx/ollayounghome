@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { supabase, Teacher, CourseCategory, CATEGORY_LABELS } from '@/lib/supabase';
 
-export default function EditCoursePage() {
+export default function NewCoursePage() {
   const router = useRouter();
-  const params = useParams();
-  const courseId = params.id as string;
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   // 폼 상태
@@ -21,57 +17,23 @@ export default function EditCoursePage() {
   const [teacherId, setTeacherId] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
-  
-  // 기존 이미지 URL
-  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState('');
-  const [currentDetailUrls, setCurrentDetailUrls] = useState<string[]>([]);
-  
-  // 새 이미지 파일
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [detailFiles, setDetailFiles] = useState<File[]>([]);
   const [detailPreviews, setDetailPreviews] = useState<string[]>([]);
 
-  // 강의 데이터 불러오기
+  // 인증 확인
   useEffect(() => {
-    const fetchCourse = async () => {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .single();
-
-      if (error || !data) {
-        console.error('Error fetching course:', error);
-        setNotFound(true);
-        setIsLoading(false);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
         return;
       }
-
-      setCategory(data.category);
-      setTitle(data.title);
-      setTeacherId(data.teacher_id || '');
-      setPrice(data.price?.toString() || '');
-      setDescription(data.description || '');
-      setCurrentThumbnailUrl(data.thumbnail_url || '');
-      
-      // 상세 이미지 URL 파싱
-      if (data.detail_image_url) {
-        try {
-          const urls = JSON.parse(data.detail_image_url);
-          setCurrentDetailUrls(Array.isArray(urls) ? urls : []);
-        } catch {
-          setCurrentDetailUrls([]);
-        }
-      }
-      
-      setIsLoading(false);
+      setAuthLoading(false);
     };
-
-    if (courseId) {
-      fetchCourse();
-    }
-  }, [courseId]);
+    checkAuth();
+  }, [router]);
 
   // 선생님 목록 불러오기
   useEffect(() => {
@@ -88,10 +50,10 @@ export default function EditCoursePage() {
       setTeachers(data || []);
     };
 
-    if (!isLoading) {
+    if (!authLoading) {
       fetchTeachers();
     }
-  }, [isLoading]);
+  }, [authLoading]);
 
   // 썸네일 파일 선택 핸들러
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,15 +86,10 @@ export default function EditCoursePage() {
     }
   };
 
-  // 새 상세 이미지 삭제
-  const removeNewDetailImage = (index: number) => {
+  // 상세 이미지 삭제
+  const removeDetailImage = (index: number) => {
     setDetailFiles(prev => prev.filter((_, i) => i !== index));
     setDetailPreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // 기존 상세 이미지 삭제
-  const removeExistingDetailImage = (index: number) => {
-    setCurrentDetailUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   // 이미지 업로드 함수
@@ -165,53 +122,52 @@ export default function EditCoursePage() {
       return;
     }
 
-    setIsSaving(true);
+    setIsLoading(true);
 
     try {
-      // 썸네일 이미지 처리
-      let thumbnailUrl = currentThumbnailUrl;
+      // 이미지 업로드
+      let thumbnailUrl = '';
+      let detailImageUrl = '';
+
       if (thumbnailFile) {
         const url = await uploadImage(thumbnailFile, 'thumbnails');
         if (url) thumbnailUrl = url;
       }
 
-      // 상세 이미지 처리: 기존 + 새로 업로드
-      let allDetailUrls = [...currentDetailUrls];
+      // 여러 상세 이미지 업로드
       if (detailFiles.length > 0) {
+        const uploadedUrls: string[] = [];
         for (const file of detailFiles) {
           const url = await uploadImage(file, 'details');
-          if (url) allDetailUrls.push(url);
+          if (url) uploadedUrls.push(url);
         }
+        detailImageUrl = JSON.stringify(uploadedUrls);
       }
-      const detailImageUrl = allDetailUrls.length > 0 ? JSON.stringify(allDetailUrls) : '';
 
-      // 강의 데이터 수정
-      const { error } = await supabase
-        .from('courses')
-        .update({
-          title: title.trim(),
-          category,
-          description: description.trim(),
-          price: parseInt(price) || 0,
-          thumbnail_url: thumbnailUrl,
-          detail_image_url: detailImageUrl,
-          teacher_id: teacherId || null,
-        })
-        .eq('id', courseId);
+      // 강의 데이터 저장
+      const { error } = await supabase.from('courses').insert({
+        title: title.trim(),
+        category,
+        description: description.trim(),
+        price: parseInt(price) || 0,
+        thumbnail_url: thumbnailUrl,
+        detail_image_url: detailImageUrl,
+        teacher_id: teacherId || null,
+      });
 
       if (error) throw error;
 
-      alert('강의가 수정되었습니다!');
-      router.push('/admin/courses');
+      alert('강의가 등록되었습니다!');
+      router.push('/backoffice/courses');
     } catch (error) {
-      console.error('Error updating course:', error);
-      alert('강의 수정 중 오류가 발생했습니다.');
+      console.error('Error creating course:', error);
+      alert('강의 등록 중 오류가 발생했습니다.');
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-violet-50/30 flex items-center justify-center">
         <div className="text-center">
@@ -219,36 +175,11 @@ export default function EditCoursePage() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <p className="text-slate-600">데이터를 불러오는 중...</p>
+          <p className="text-slate-600">인증 확인 중...</p>
         </div>
       </div>
     );
   }
-
-  if (notFound) {
-    return (
-      <div className="min-h-screen bg-violet-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
-            <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">강의를 찾을 수 없습니다</h1>
-          <p className="text-slate-500 mb-6">요청하신 강의 정보가 존재하지 않습니다.</p>
-          <a
-            href="/admin/courses"
-            className="inline-block px-6 py-3 text-white bg-violet-500 hover:bg-violet-600 rounded-lg font-medium transition-colors"
-          >
-            목록으로 돌아가기
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // 표시할 썸네일 (새 이미지 프리뷰 > 기존 이미지)
-  const displayThumbnail = thumbnailPreview || currentThumbnailUrl;
 
   return (
     <div className="min-h-screen bg-violet-50/30">
@@ -257,7 +188,7 @@ export default function EditCoursePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <a href="/admin">
+              <a href="/backoffice">
                 <Image
                   src="/logo.png"
                   alt="올라영"
@@ -268,11 +199,11 @@ export default function EditCoursePage() {
               </a>
               <div className="hidden sm:block h-8 w-px bg-slate-200"></div>
               <div className="hidden sm:block">
-                <h1 className="text-2xl font-bold text-slate-800">강의 수정</h1>
+                <h1 className="text-2xl font-bold text-slate-800">새 강의 등록</h1>
               </div>
             </div>
             <a
-              href="/admin/courses"
+              href="/backoffice/courses"
               className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-slate-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -334,6 +265,12 @@ export default function EditCoursePage() {
                   <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
                 ))}
               </select>
+              {teachers.length === 0 && (
+                <p className="mt-2 text-sm text-amber-600">
+                  ⚠️ 등록된 선생님이 없습니다. 
+                  <a href="/backoffice/teachers/new" className="underline ml-1">선생님 먼저 등록하기</a>
+                </p>
+              )}
             </div>
 
             {/* 수강료 */}
@@ -376,8 +313,8 @@ export default function EditCoursePage() {
                       <svg className="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <p className="text-sm text-slate-500">클릭하여 새 이미지 업로드</p>
-                      <p className="text-xs text-slate-400 mt-1">기존 이미지를 교체합니다 (권장: 1280x720)</p>
+                      <p className="text-sm text-slate-500">클릭하여 이미지 업로드</p>
+                      <p className="text-xs text-slate-400 mt-1">목록용 썸네일 (권장: 1280x720)</p>
                     </div>
                     <input
                       type="file"
@@ -387,20 +324,18 @@ export default function EditCoursePage() {
                     />
                   </label>
                 </div>
-                {displayThumbnail && (
+                {thumbnailPreview && (
                   <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-slate-200">
-                    <img src={displayThumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
-                    {thumbnailPreview && (
-                      <button
-                        type="button"
-                        onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); }}
-                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                    <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); }}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
@@ -411,34 +346,6 @@ export default function EditCoursePage() {
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 상세 설명 이미지 <span className="text-slate-400 font-normal">(여러 장 선택 가능)</span>
               </label>
-              
-              {/* 기존 상세 이미지 */}
-              {currentDetailUrls.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-slate-500 mb-2">기존 이미지 ({currentDetailUrls.length}장)</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {currentDetailUrls.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-slate-200 group">
-                        <img src={url} alt={`Detail ${index + 1}`} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={() => removeExistingDetailImage(index)}
-                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 text-white text-xs rounded">
-                          {index + 1}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
               
               {/* 업로드 영역 */}
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-violet-400 hover:bg-violet-50/50 transition-all mb-4">
@@ -458,20 +365,21 @@ export default function EditCoursePage() {
                 />
               </label>
 
-              {/* 새 이미지 프리뷰 목록 */}
+              {/* 이미지 프리뷰 목록 */}
               {detailPreviews.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-sm text-slate-500">
-                    새로 추가할 이미지 ({detailPreviews.length}장)
+                    {detailPreviews.length}장의 이미지가 선택됨 
+                    <span className="text-xs text-slate-400 ml-2">(드래그하여 순서 변경 불가, 삭제 후 재업로드)</span>
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {detailPreviews.map((preview, index) => (
-                      <div key={`new-${index}`} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-violet-300 group">
-                        <img src={preview} alt={`New Detail ${index + 1}`} className="w-full h-full object-cover" />
+                      <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-slate-200 group">
+                        <img src={preview} alt={`Detail ${index + 1}`} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button
                             type="button"
-                            onClick={() => removeNewDetailImage(index)}
+                            onClick={() => removeDetailImage(index)}
                             className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,8 +387,8 @@ export default function EditCoursePage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-violet-500 text-white text-xs rounded">
-                          NEW
+                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 text-white text-xs rounded">
+                          {index + 1}
                         </div>
                       </div>
                     ))}
@@ -494,26 +402,26 @@ export default function EditCoursePage() {
           <div className="mt-8 flex gap-4">
             <button
               type="button"
-              onClick={() => router.push('/admin/courses')}
+              onClick={() => router.push('/backoffice/courses')}
               className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
             >
               취소
             </button>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isLoading}
               className="flex-1 py-3 bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-200 disabled:opacity-50"
             >
-              {isSaving ? (
+              {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  저장 중...
+                  등록 중...
                 </span>
               ) : (
-                '저장하기'
+                '등록하기'
               )}
             </button>
           </div>

@@ -94,7 +94,7 @@ export default function NewTeacherPage() {
       if (error) throw error;
 
       alert('선생님이 등록되었습니다!');
-      router.push('/admin/teachers');
+      router.push('/backoffice/teachers');
     } catch (error) {
       console.error('Error creating teacher:', error);
       alert('등록 중 오류가 발생했습니다.');
@@ -124,7 +124,7 @@ export default function NewTeacherPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <a href="/admin">
+              <a href="/backoffice">
                 <Image
                   src="/logo.png"
                   alt="올라영"
@@ -139,7 +139,7 @@ export default function NewTeacherPage() {
               </div>
             </div>
             <a
-              href="/admin/teachers"
+              href="/backoffice/teachers"
               className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-slate-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +261,7 @@ export default function NewTeacherPage() {
           <div className="mt-8 flex gap-4">
             <button
               type="button"
-              onClick={() => router.push('/admin/teachers')}
+              onClick={() => router.push('/backoffice/teachers')}
               className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
             >
               취소

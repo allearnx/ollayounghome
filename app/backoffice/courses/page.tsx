@@ -90,7 +90,7 @@ export default function CoursesPage() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-slate-800">강의 목록</h2>
         <Link
-          href="/admin/courses/new"
+          href="/backoffice/courses/new"
           className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all shadow-md shadow-violet-200"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@ export default function CoursesPage() {
             </p>
             <p className="text-slate-400 text-sm mb-4">새 강의를 등록해주세요</p>
             <Link
-              href="/admin/courses/new"
+              href="/backoffice/courses/new"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +199,7 @@ export default function CoursesPage() {
                     <td className="py-2.5 px-4">
                       <div className="flex items-center justify-center gap-1">
                         <Link
-                          href={`/admin/courses/${course.id}/edit`}
+                          href={`/backoffice/courses/${course.id}/edit`}
                           className="p-1.5 text-slate-400 hover:text-violet-500 hover:bg-violet-50 rounded-md transition-colors"
                           title="수정"
                         >

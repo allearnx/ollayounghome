@@ -23,7 +23,7 @@ interface MenuItem {
 // 공통 메뉴 (모든 사용자)
 const commonMenuItems: MenuItem[] = [
   {
-    href: '/admin',
+    href: '/backoffice',
     label: '상담 신청',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ const commonMenuItems: MenuItem[] = [
     ),
   },
   {
-    href: '/admin/courses',
+    href: '/backoffice/courses',
     label: '강의 관리',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ const commonMenuItems: MenuItem[] = [
     ),
   },
   {
-    href: '/admin/teachers',
+    href: '/backoffice/teachers',
     label: '선생님 관리',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,7 @@ const commonMenuItems: MenuItem[] = [
     ),
   },
   {
-    href: '/admin/reviews',
+    href: '/backoffice/reviews',
     label: '수강후기',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@ const commonMenuItems: MenuItem[] = [
     ),
   },
   {
-    href: '/admin/faqs',
+    href: '/backoffice/faqs',
     label: 'FAQ',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@ const commonMenuItems: MenuItem[] = [
 // Admin 전용 메뉴 (결제/매출 관련)
 const adminOnlyMenuItems: MenuItem[] = [
   {
-    href: '/admin/payments',
+    href: '/backoffice/payments',
     label: '결제 관리',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@ const adminOnlyMenuItems: MenuItem[] = [
     adminOnly: true,
   },
   {
-    href: '/admin/revenue',
+    href: '/backoffice/revenue',
     label: '수납 현황',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@ const adminOnlyMenuItems: MenuItem[] = [
     adminOnly: true,
   },
   {
-    href: '/admin/reports',
+    href: '/backoffice/reports',
     label: '매출 리포트',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +128,7 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
       // 권한이 없는 경우 (admin 페이지에 staff가 접근하려 할 때)
       if (requiredRole === 'admin' && !isAdmin) {
         alert('권한이 없습니다. 관리자만 접근할 수 있는 페이지입니다.');
-        router.push('/admin');
+        router.push('/backoffice');
         return;
       }
     }
@@ -136,8 +136,8 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
 
   // 현재 메뉴가 활성화되어 있는지 확인
   const isActiveMenu = (href: string) => {
-    if (href === '/admin') {
-      return pathname === '/admin';
+    if (href === '/backoffice') {
+      return pathname === '/backoffice';
     }
     return pathname.startsWith(href);
   };
@@ -449,7 +449,7 @@ export function AdminOnlyGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoading && !isAdmin) {
       alert('권한이 없습니다. 관리자만 접근할 수 있는 페이지입니다.');
-      router.push('/admin');
+      router.push('/backoffice');
     }
   }, [isLoading, isAdmin, router]);
 

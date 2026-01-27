@@ -78,7 +78,7 @@ export default function ReviewsAdminPage() {
           <p className="text-sm text-slate-500 mt-1">학생 후기를 입력하면 예쁜 카드로 자동 생성됩니다</p>
         </div>
         <Link
-          href="/admin/reviews/new"
+          href="/backoffice/reviews/new"
           className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all shadow-md shadow-violet-200"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ export default function ReviewsAdminPage() {
             <p className="text-slate-600 font-medium mb-1">등록된 수강후기가 없습니다</p>
             <p className="text-slate-400 text-sm mb-4">새 후기를 등록해주세요</p>
             <Link
-              href="/admin/reviews/new"
+              href="/backoffice/reviews/new"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@ export default function ReviewsAdminPage() {
                     {review.is_visible ? '숨기기' : '노출하기'}
                   </button>
                   <Link
-                    href={`/admin/reviews/${review.id}/edit`}
+                    href={`/backoffice/reviews/${review.id}/edit`}
                     className="flex-1 py-2 text-center text-sm font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors"
                   >
                     수정

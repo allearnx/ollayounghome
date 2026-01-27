@@ -115,7 +115,7 @@ export default function EditTeacherPage() {
       }
 
       alert('선생님 정보가 수정되었습니다!');
-      router.push('/admin/teachers');
+      router.push('/backoffice/teachers');
     } catch (err) {
       console.error('Error:', err);
       alert('오류가 발생했습니다.');
@@ -146,7 +146,7 @@ export default function EditTeacherPage() {
           <h1 className="text-2xl font-bold text-slate-800 mb-2">선생님을 찾을 수 없습니다</h1>
           <p className="text-slate-500 mb-6">요청하신 선생님 정보가 존재하지 않습니다.</p>
           <a
-            href="/admin/teachers"
+            href="/backoffice/teachers"
             className="inline-block px-6 py-3 text-white bg-violet-500 hover:bg-violet-600 rounded-lg font-medium transition-colors"
           >
             목록으로 돌아가기
@@ -166,7 +166,7 @@ export default function EditTeacherPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <a href="/admin">
+              <a href="/backoffice">
                 <Image
                   src="/logo.png"
                   alt="올라영"
@@ -181,7 +181,7 @@ export default function EditTeacherPage() {
               </div>
             </div>
             <a
-              href="/admin/teachers"
+              href="/backoffice/teachers"
               className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-slate-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,7 +303,7 @@ export default function EditTeacherPage() {
             {/* 버튼 */}
             <div className="flex gap-3 pt-4">
               <a
-                href="/admin/teachers"
+                href="/backoffice/teachers"
                 className="flex-1 py-3.5 text-center text-base font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
               >
                 취소

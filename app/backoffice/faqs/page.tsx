@@ -100,7 +100,7 @@ export default function FAQsAdminPage() {
           <p className="text-sm text-slate-500 mt-1">자주 묻는 질문을 관리하세요</p>
         </div>
         <Link
-          href="/admin/faqs/new"
+          href="/backoffice/faqs/new"
           className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all shadow-md shadow-violet-200"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ export default function FAQsAdminPage() {
             <p className="text-slate-600 font-medium mb-1">등록된 FAQ가 없습니다</p>
             <p className="text-slate-400 text-sm mb-4">새 FAQ를 등록해주세요</p>
             <Link
-              href="/admin/faqs/new"
+              href="/backoffice/faqs/new"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +225,7 @@ export default function FAQsAdminPage() {
                       )}
                     </button>
                     <Link
-                      href={`/admin/faqs/${faq.id}/edit`}
+                      href={`/backoffice/faqs/${faq.id}/edit`}
                       className="p-2 text-violet-500 hover:bg-violet-50 rounded-lg transition-colors"
                       title="수정"
                     >

@@ -33,7 +33,7 @@ export default function LoginPage() {
       }
 
       // 로그인 성공 시 관리자 페이지로 이동
-      router.push('/admin');
+      router.push('/backoffice');
       router.refresh();
     } catch (err) {
       console.error('Login error:', err);

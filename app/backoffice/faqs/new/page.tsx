@@ -44,7 +44,7 @@ export default function NewFAQPage() {
       if (error) throw error;
 
       alert('FAQ가 등록되었습니다!');
-      router.push('/admin/faqs');
+      router.push('/backoffice/faqs');
     } catch (err) {
       console.error('Error creating FAQ:', err);
       alert('등록 중 오류가 발생했습니다.');
@@ -59,7 +59,7 @@ export default function NewFAQPage() {
         {/* 헤더 */}
         <div className="mb-6">
           <Link
-            href="/admin/faqs"
+            href="/backoffice/faqs"
             className="inline-flex items-center gap-2 text-slate-500 hover:text-violet-600 mb-4"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@ export default function NewFAQPage() {
           {/* 버튼 */}
           <div className="flex gap-3 pt-4">
             <Link
-              href="/admin/faqs"
+              href="/backoffice/faqs"
               className="flex-1 py-3 text-center border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
             >
               취소
