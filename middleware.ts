@@ -31,6 +31,18 @@ function notFound(): Response {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Hide common secret file targets
+  // - /.env, /.env.local, /.env.production, ...
+  // - /.git/config, ...
+  if (
+    pathname === '/.env' ||
+    pathname.startsWith('/.env.') ||
+    pathname === '/.git' ||
+    pathname.startsWith('/.git/')
+  ) {
+    return notFound();
+  }
+
   // Hide /admin entirely (common scanner target)
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     return notFound();
@@ -75,6 +87,8 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/backoffice/:path*'],
+  // Apply middleware broadly (excluding Next internal assets) so we can
+  // 404 common secret-file scans like /.env.local.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
 
