@@ -565,37 +565,52 @@ export default function HomePage() {
       {/* ===== 이벤트 팝업 (첫 방문 시 자동 표시) ===== */}
       {showEventPopup && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70] overflow-y-auto"
           onClick={closeEventPopup}
         >
           <div 
-            className="relative max-w-md w-full"
+            className="relative w-full max-w-5xl my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* X 닫기 버튼 (우측 상단) */}
             <button
               onClick={closeEventPopup}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+              className="absolute -top-10 right-0 md:right-0 text-white hover:text-gray-300 transition-colors z-10"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             
-            {/* 팝업 이미지 */}
-            <div className="rounded-2xl overflow-hidden shadow-2xl">
-              <Image
-                src="/popup/event.png"
-                alt="이벤트 안내"
-                width={1080}
-                height={960}
-                className="w-full h-auto"
-                priority
-              />
+            {/* 팝업 이미지 2개 나란히 */}
+            <div className="flex flex-col md:flex-row gap-4 items-start justify-center">
+              {/* 첫 번째 팝업 */}
+              <div className="w-full md:w-auto md:max-w-xl rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/popup/event.png"
+                  alt="이벤트 안내 1"
+                  width={1080}
+                  height={960}
+                  className="w-full h-auto"
+                  priority
+                />
+              </div>
+              
+              {/* 두 번째 팝업 */}
+              <div className="w-full md:w-auto md:max-w-xl rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/popup/event2.png"
+                  alt="이벤트 안내 2"
+                  width={1080}
+                  height={1350}
+                  className="w-full h-auto"
+                  priority
+                />
+              </div>
             </div>
             
             {/* 하단 버튼 영역 */}
-            <div className="flex mt-3 gap-2">
+            <div className="flex mt-4 gap-2 max-w-md mx-auto">
               <button
                 onClick={hideEventPopupForToday}
                 className="flex-1 py-3 bg-white/20 hover:bg-white/30 text-white text-sm rounded-xl backdrop-blur-sm transition-colors"
