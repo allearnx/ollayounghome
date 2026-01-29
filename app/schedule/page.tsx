@@ -98,7 +98,9 @@ const scheduleData: Record<string, Record<string, ScheduleCell>> = {
       { name: '리딩 4.0 국내 A반', time: '7:00-8:20', teacher: 'Jean T', isNew: true, tags: ['리딩'], type: 'reading' },
     ]},
     '토': { classes: [] },
-    '일': { classes: [] },
+    '일': { classes: [
+      { name: '구해영', subName: '독해 Level 3', time: '7:00-8:20', teacher: '황지환 T', isNew: true, type: 'reading' },
+    ]},
   },
   'pm-8': {
     '월': { classes: [
@@ -110,7 +112,9 @@ const scheduleData: Record<string, Record<string, ScheduleCell>> = {
     ]},
     '목': { classes: [] },
     '토': { classes: [] },
-    '일': { classes: [] },
+    '일': { classes: [
+      { name: '고2 모의고사', subName: '기출', time: '8:30-9:50', teacher: '황지환 T', isNew: true, type: 'reading' },
+    ]},
   },
   'pm-9': {
     '월': { classes: [
