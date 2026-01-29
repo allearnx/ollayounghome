@@ -287,6 +287,8 @@ CREATE TABLE IF NOT EXISTS payments (
     method TEXT,                                 -- 결제수단 (카드, 계좌이체, 가상계좌 등)
     receipt_url TEXT,                            -- 영수증 URL
     paid_at TIMESTAMP WITH TIME ZONE,            -- 결제 완료 시간
+    cancelled_at TIMESTAMP WITH TIME ZONE,       -- 취소/환불 확정 시간 (토스 canceledAt)
+    cancelled_amount INTEGER DEFAULT 0,          -- 취소/환불 금액(부분취소 합산 가능; 현재는 전액취소만 사용)
     customer_name TEXT,                          -- 결제자 이름
     customer_phone TEXT                          -- 결제자 연락처
 );
@@ -297,6 +299,8 @@ CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
 CREATE INDEX IF NOT EXISTS idx_payments_course_id ON payments(course_id);
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_paid_at ON payments(paid_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payments_cancelled_at ON payments(cancelled_at DESC);
 
 -- RLS 정책
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;

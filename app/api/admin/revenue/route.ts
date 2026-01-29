@@ -50,22 +50,45 @@ export async function GET(request: NextRequest) {
     const monthPaidCount = (paidRows ?? []).length;
     const monthPaidTotal = (paidRows ?? []).reduce((sum, r) => sum + (r?.amount ?? 0), 0);
 
-    // cancelled/refund metrics: best-effort using updated_at within the month.
-    // NOTE: We don't store cancelAmount separately in our DB today.
+    // cancelled/refund metrics:
+    // Prefer exact cancelled_at + cancelled_amount (derived from Toss cancels[].cancelAmount).
+    // Fallback to older rows using updated_at + amount.
+    let monthCancelledTotal = 0;
+    let monthCancelledCount = 0;
     const { data: cancelledRows, error: cancelledErr } = await supabase
       .from('payments')
-      .select('amount')
+      .select('cancelled_at, cancelled_amount, amount, updated_at')
       .eq('status', 'cancelled')
-      .gte('updated_at', startIso)
-      .lt('updated_at', endIso);
+      .gte('cancelled_at', startIso)
+      .lt('cancelled_at', endIso);
 
     if (cancelledErr) {
-      console.error('Admin revenue cancelledErr:', cancelledErr);
-      return NextResponse.json({ error: '취소/환불 데이터를 불러올 수 없습니다.' }, { status: 500 });
+      const msg = String((cancelledErr as any)?.message ?? '');
+      // If schema isn't migrated yet, fallback to legacy calculation.
+      if (/column .*cancelled_/i.test(msg)) {
+        const { data: legacyRows, error: legacyErr } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('status', 'cancelled')
+          .gte('updated_at', startIso)
+          .lt('updated_at', endIso);
+        if (legacyErr) {
+          console.error('Admin revenue legacy cancelledErr:', legacyErr);
+          return NextResponse.json({ error: '취소/환불 데이터를 불러올 수 없습니다.' }, { status: 500 });
+        }
+        monthCancelledCount = (legacyRows ?? []).length;
+        monthCancelledTotal = (legacyRows ?? []).reduce((sum, r) => sum + (r?.amount ?? 0), 0);
+      } else {
+        console.error('Admin revenue cancelledErr:', cancelledErr);
+        return NextResponse.json({ error: '취소/환불 데이터를 불러올 수 없습니다.' }, { status: 500 });
+      }
+    } else {
+      monthCancelledCount = (cancelledRows ?? []).length;
+      monthCancelledTotal = (cancelledRows ?? []).reduce((sum, r: any) => {
+        const v = Number(r?.cancelled_amount ?? r?.amount ?? 0) || 0;
+        return sum + v;
+      }, 0);
     }
-
-    const monthCancelledTotal = (cancelledRows ?? []).reduce((sum, r) => sum + (r?.amount ?? 0), 0);
-    const monthCancelledCount = (cancelledRows ?? []).length;
 
     // total students (not month-specific)
     const { count: totalStudents, error: studentsErr } = await supabase

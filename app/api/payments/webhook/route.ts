@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdmin();
   const startedAt = Date.now();
   let body: unknown = null;
+  let verifiedPayment: any | null = null;
   
   try {
     body = await request.json();
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
         });
         return NextResponse.json({ success: false }, { status: 200 });
       }
+      verifiedPayment = verified.data;
       // overwrite with verified minimal fields
       data.status = verified.data.status ?? data.status;
       data.orderId = verified.data.orderId ?? data.orderId;
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
     // 이벤트 타입에 따른 처리
     switch (eventType) {
       case 'PAYMENT_STATUS_CHANGED':
-        await handlePaymentStatusChanged(supabase, data);
+        await handlePaymentStatusChanged(supabase, data, verifiedPayment);
         break;
 
       case 'DEPOSIT_CALLBACK':
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
 
       case 'CANCEL_STATUS_CHANGED':
         // 결제 취소 상태 변경
-        await handleCancelStatusChanged(supabase, data);
+        await handleCancelStatusChanged(supabase, data, verifiedPayment);
         break;
 
       default:
@@ -95,7 +97,8 @@ async function handlePaymentStatusChanged(
     transactionKey?: string;
     paymentKey?: string;
     secret?: string;
-  }
+  },
+  verifiedPayment: any | null
 ) {
   const { orderId, status, paymentKey } = data;
 
@@ -151,7 +154,15 @@ async function handlePaymentStatusChanged(
   }
 
   if (dbStatus === 'paid') {
-    updateData.paid_at = new Date().toISOString();
+    updateData.paid_at = verifiedPayment?.approvedAt ?? new Date().toISOString();
+  }
+
+  if (dbStatus === 'cancelled') {
+    const cancels = Array.isArray(verifiedPayment?.cancels) ? verifiedPayment.cancels : [];
+    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
+    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+    updateData.cancelled_at = latestCancel?.canceledAt ?? new Date().toISOString();
+    updateData.cancelled_amount = totalCancelledAmount || null;
   }
 
   const { error } = await supabase
@@ -160,8 +171,22 @@ async function handlePaymentStatusChanged(
     .eq('order_id', orderId);
 
   if (error) {
-    console.error('Failed to update payment status:', error);
-    throw error;
+    // If schema hasn't been migrated yet (missing cancelled_* columns),
+    // retry without those optional fields so webhook doesn't break.
+    const msg = String((error as any)?.message ?? '');
+    if (dbStatus === 'cancelled' && /cancelled_(at|amount)/i.test(msg)) {
+      const retryData = { ...updateData };
+      delete retryData.cancelled_at;
+      delete retryData.cancelled_amount;
+      const { error: retryErr } = await supabase.from('payments').update(retryData).eq('order_id', orderId);
+      if (retryErr) {
+        console.error('Failed to update payment status (retry):', retryErr);
+        throw retryErr;
+      }
+    } else {
+      console.error('Failed to update payment status:', error);
+      throw error;
+    }
   }
 
   // 학생 상태도 업데이트
@@ -237,22 +262,44 @@ async function handleCancelStatusChanged(
     orderId: string;
     paymentKey: string;
     cancelStatus: string;
-  }
+  },
+  verifiedPayment: any | null
 ) {
   const { orderId, cancelStatus } = data;
 
   if (cancelStatus === 'DONE') {
+    const cancels = Array.isArray(verifiedPayment?.cancels) ? verifiedPayment.cancels : [];
+    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
+    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+
     const { error } = await supabase
       .from('payments')
       .update({
         status: 'cancelled',
         updated_at: new Date().toISOString(),
+        cancelled_at: latestCancel?.canceledAt ?? new Date().toISOString(),
+        cancelled_amount: totalCancelledAmount || null,
       })
       .eq('order_id', orderId);
 
     if (error) {
-      console.error('Failed to update cancel status:', error);
-      throw error;
+      const msg = String((error as any)?.message ?? '');
+      if (/cancelled_(at|amount)/i.test(msg)) {
+        const { error: retryErr } = await supabase
+          .from('payments')
+          .update({
+            status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('order_id', orderId);
+        if (retryErr) {
+          console.error('Failed to update cancel status (retry):', retryErr);
+          throw retryErr;
+        }
+      } else {
+        console.error('Failed to update cancel status:', error);
+        throw error;
+      }
     }
 
     console.log(`Payment ${orderId} cancelled`);

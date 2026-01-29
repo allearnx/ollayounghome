@@ -80,11 +80,21 @@ export async function POST(request: NextRequest) {
     const newStatus = data.status === 'CANCELED' ? 'cancelled' : 
                       data.status === 'PARTIAL_CANCELED' ? 'paid' : 'cancelled';
 
+    const cancels = Array.isArray(data.cancels) ? data.cancels : [];
+    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
+    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+
     const { error: updateError } = await supabase
       .from('payments')
       .update({
         status: newStatus,
         updated_at: new Date().toISOString(),
+        ...(newStatus === 'cancelled'
+          ? {
+              cancelled_at: latestCancel?.canceledAt ?? new Date().toISOString(),
+              cancelled_amount: totalCancelledAmount || null,
+            }
+          : {}),
       })
       .eq('payment_key', paymentKey);
 
@@ -92,9 +102,6 @@ export async function POST(request: NextRequest) {
       console.error('DB update error after cancel:', updateError);
       // 토스 취소는 성공했으므로 에러를 던지지 않고 로그만 남김
     }
-
-    // 취소 정보 반환
-    const latestCancel = data.cancels?.[data.cancels.length - 1];
 
     return NextResponse.json({
       success: true,
@@ -111,7 +118,7 @@ export async function POST(request: NextRequest) {
             cancelStatus: latestCancel.cancelStatus,
           }
         : null,
-      totalCancels: data.cancels?.length || 0,
+      totalCancels: cancels.length || 0,
     });
   } catch (error) {
     if (error instanceof AdminAuthError) {

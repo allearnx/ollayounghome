@@ -161,7 +161,7 @@ export default function RevenuePage() {
               </li>
             </ul>
             <p className="mt-3 text-xs text-slate-500">
-              * 취소/환불 금액은 현재 DB에 취소금액을 별도 저장하지 않아서, 해당 월의 `cancelled` 결제 금액 합으로 계산됩니다.
+              * 취소/환불 금액은 `cancelled_at` 기준으로 집계되며, `cancelled_amount`(토스 취소금액 합산)가 있으면 그 값을 사용합니다.
             </p>
           </div>
         )}
