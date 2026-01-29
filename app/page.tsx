@@ -91,6 +91,27 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
+  const [showEventPopup, setShowEventPopup] = useState(false);
+
+  // 이벤트 팝업 - 페이지 로드 시 표시 (오늘 하루 보지 않기 체크)
+  useEffect(() => {
+    const hideUntil = localStorage.getItem('eventPopupHideUntil');
+    const now = new Date().getTime();
+    
+    if (!hideUntil || now > parseInt(hideUntil)) {
+      setShowEventPopup(true);
+    }
+  }, []);
+
+  const closeEventPopup = () => setShowEventPopup(false);
+
+  const hideEventPopupForToday = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    localStorage.setItem('eventPopupHideUntil', tomorrow.getTime().toString());
+    setShowEventPopup(false);
+  };
 
   const formatPhoneNumber = (value: string) => {
     const numbers = value.replace(/[^\d]/g, '');
@@ -535,6 +556,57 @@ export default function HomePage() {
                 className="btn-glow w-full py-4 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-violet-500/30"
               >
                 확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== 이벤트 팝업 (첫 방문 시 자동 표시) ===== */}
+      {showEventPopup && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"
+          onClick={closeEventPopup}
+        >
+          <div 
+            className="relative max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* X 닫기 버튼 (우측 상단) */}
+            <button
+              onClick={closeEventPopup}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* 팝업 이미지 */}
+            <div className="rounded-2xl overflow-hidden shadow-2xl">
+              <Image
+                src="/popup/event.png"
+                alt="이벤트 안내"
+                width={1080}
+                height={960}
+                className="w-full h-auto"
+                priority
+              />
+            </div>
+            
+            {/* 하단 버튼 영역 */}
+            <div className="flex mt-3 gap-2">
+              <button
+                onClick={hideEventPopupForToday}
+                className="flex-1 py-3 bg-white/20 hover:bg-white/30 text-white text-sm rounded-xl backdrop-blur-sm transition-colors"
+              >
+                오늘 하루 보지 않기
+              </button>
+              <button
+                onClick={closeEventPopup}
+                className="flex-1 py-3 bg-white hover:bg-gray-100 text-gray-800 text-sm font-medium rounded-xl transition-colors"
+              >
+                닫기
               </button>
             </div>
           </div>
