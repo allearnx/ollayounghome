@@ -1,8 +1,78 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import { supabase } from '@/lib/supabase';
 
 export default function RevenuePage() {
+  const [month, setMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  const [metrics, setMetrics] = useState<{
+    month: string;
+    monthPaidTotal: number;
+    monthPaidCount: number;
+    monthCancelledTotal: number;
+    monthCancelledCount: number;
+    totalStudents: number;
+  } | null>(null);
+
+  const monthOptions = useMemo(() => {
+    // last 12 months (including current)
+    const opts: Array<{ value: string; label: string }> = [];
+    const d = new Date();
+    d.setDate(1);
+    for (let i = 0; i < 12; i++) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const value = `${y}-${m}`;
+      opts.push({ value, label: `${y}년 ${Number(m)}월` });
+      d.setMonth(d.getMonth() - 1);
+    }
+    return opts;
+  }, []);
+
+  const formatKRW = (n: number) => `₩${new Intl.NumberFormat('ko-KR').format(n)}`;
+
+  const fetchMetrics = async (targetMonth: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      const response = await fetch(`/api/admin/revenue?month=${encodeURIComponent(targetMonth)}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || '수납 데이터를 불러오지 못했습니다.');
+      }
+
+      setMetrics(data);
+    } catch (e) {
+      setMetrics(null);
+      setError(e instanceof Error ? e.message : '수납 데이터를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics(month);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month]);
+
   return (
     <AdminLayout requiredRole="admin">
       <div className="mb-6">
@@ -14,23 +84,35 @@ export default function RevenuePage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl p-6 border border-violet-100 shadow-sm">
           <p className="text-sm font-medium text-slate-500 mb-1">이번 달 수납</p>
-          <p className="text-2xl font-bold text-slate-800">₩0</p>
-          <p className="text-xs text-emerald-600 mt-1">+0% 전월 대비</p>
+          <p className="text-2xl font-bold text-slate-800">
+            {isLoading ? '—' : formatKRW(metrics?.monthPaidTotal ?? 0)}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            {isLoading ? '불러오는 중...' : `결제 ${metrics?.monthPaidCount ?? 0}건`}
+          </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-violet-100 shadow-sm">
-          <p className="text-sm font-medium text-slate-500 mb-1">미수금</p>
-          <p className="text-2xl font-bold text-red-600">₩0</p>
-          <p className="text-xs text-slate-500 mt-1">0명 미납</p>
+          <p className="text-sm font-medium text-slate-500 mb-1">이번 달 결제 건수</p>
+          <p className="text-2xl font-bold text-slate-800">
+            {isLoading ? '—' : `${metrics?.monthPaidCount ?? 0}건`}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">승인 기준(`paid_at`)</p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-violet-100 shadow-sm">
-          <p className="text-sm font-medium text-slate-500 mb-1">수납률</p>
-          <p className="text-2xl font-bold text-slate-800">100%</p>
-          <p className="text-xs text-slate-500 mt-1">목표: 95%</p>
+          <p className="text-sm font-medium text-slate-500 mb-1">이번 달 취소/환불</p>
+          <p className="text-2xl font-bold text-red-600">
+            {isLoading ? '—' : formatKRW(metrics?.monthCancelledTotal ?? 0)}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            {isLoading ? '' : `취소 ${metrics?.monthCancelledCount ?? 0}건`}
+          </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-violet-100 shadow-sm">
           <p className="text-sm font-medium text-slate-500 mb-1">총 학생 수</p>
-          <p className="text-2xl font-bold text-slate-800">0명</p>
-          <p className="text-xs text-slate-500 mt-1">활성 수강생</p>
+          <p className="text-2xl font-bold text-slate-800">
+            {isLoading ? '—' : `${metrics?.totalStudents ?? 0}명`}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">누적 등록 기준</p>
         </div>
       </div>
 
@@ -38,38 +120,51 @@ export default function RevenuePage() {
       <div className="bg-white rounded-xl border border-violet-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800">학생별 수납 현황</h3>
-          <select className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-300">
-            <option>2026년 1월</option>
-            <option>2025년 12월</option>
-            <option>2025년 11월</option>
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-300"
+          >
+            {monthOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
         </div>
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-100 rounded-full mb-4">
-            <svg className="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-slate-600 font-medium mb-1">수납 데이터가 없습니다</p>
-          <p className="text-slate-400 text-sm">학생 등록 후 수납 정보가 표시됩니다</p>
-        </div>
-      </div>
 
-      {/* Admin 전용 안내 */}
-      <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+        {error ? (
+          <div className="p-6">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-700 font-medium">{error}</p>
+              <button
+                onClick={() => fetchMetrics(month)}
+                className="mt-3 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                다시 시도
+              </button>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-amber-800">관리자 전용 페이지</p>
-            <p className="text-sm text-amber-700 mt-1">
-              이 페이지는 관리자(Admin)만 접근할 수 있습니다. 수납 정보를 안전하게 관리하세요.
+        ) : (
+          <div className="p-6 text-sm text-slate-600">
+            <p className="font-semibold text-slate-800 mb-2">요약</p>
+            <ul className="space-y-1">
+              <li>
+                이번 달 수납: <strong>{isLoading ? '—' : formatKRW(metrics?.monthPaidTotal ?? 0)}</strong>
+              </li>
+              <li>
+                결제 건수: <strong>{isLoading ? '—' : `${metrics?.monthPaidCount ?? 0}건`}</strong>
+              </li>
+              <li>
+                취소/환불(추정):{' '}
+                <strong className="text-red-700">{isLoading ? '—' : formatKRW(metrics?.monthCancelledTotal ?? 0)}</strong>
+              </li>
+            </ul>
+            <p className="mt-3 text-xs text-slate-500">
+              * 취소/환불 금액은 현재 DB에 취소금액을 별도 저장하지 않아서, 해당 월의 `cancelled` 결제 금액 합으로 계산됩니다.
             </p>
           </div>
-        </div>
+        )}
       </div>
     </AdminLayout>
   );
