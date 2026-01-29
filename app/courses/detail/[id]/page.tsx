@@ -70,13 +70,20 @@ export default function CourseDetailPage() {
     setIsCreatingOrder(true);
     
     try {
+      if (!customerName.trim()) {
+        throw new Error('이름을 입력해주세요.');
+      }
+      if (!customerPhone.trim()) {
+        throw new Error('연락처를 입력해주세요.');
+      }
+
       const response = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId: course.id,
-          customerName: customerName || null,
-          customerPhone: customerPhone || null,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
         }),
       });
       
@@ -407,7 +414,7 @@ export default function CourseDetailPage() {
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      이름 <span className="text-slate-400">(선택)</span>
+                      이름 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -415,11 +422,12 @@ export default function CourseDetailPage() {
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="홍길동"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      연락처 <span className="text-slate-400">(선택)</span>
+                      연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -427,6 +435,7 @@ export default function CourseDetailPage() {
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="010-1234-5678"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                      required
                     />
                   </div>
                   

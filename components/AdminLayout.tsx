@@ -106,7 +106,7 @@ const adminOnlyMenuItems: MenuItem[] = [
 export default function AdminLayout({ children, requiredRole = 'staff' }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, isAdmin, isLoading, logout } = useUserRole();
+  const { user, role, isAdmin, isLoading, logout, refetchProfile } = useUserRole();
   
   // 비밀번호 변경 모달 상태
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -125,8 +125,13 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
         return;
       }
 
+      // 권한이 아직 확인되지 않은 경우: 리다이렉트하지 말고 대기
+      if (requiredRole === 'admin' && role === null) {
+        return;
+      }
+
       // 권한이 없는 경우 (admin 페이지에 staff가 접근하려 할 때)
-      if (requiredRole === 'admin' && !isAdmin) {
+      if (requiredRole === 'admin' && role !== 'admin') {
         alert('권한이 없습니다. 관리자만 접근할 수 있는 페이지입니다.');
         router.push('/backoffice');
         return;
@@ -213,6 +218,38 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
   // 인증되지 않은 경우 (리다이렉트 중)
   if (!user) {
     return null;
+  }
+
+  // 세션은 있는데 role을 못 불러온 경우(네트워크 지연/일시 오류)
+  if (requiredRole === 'admin' && role === null) {
+    return (
+      <div className="min-h-screen bg-violet-50/30 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-violet-100 shadow-sm p-6 text-center">
+          <svg className="animate-spin h-10 w-10 text-violet-500 mx-auto mb-4" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="text-slate-700 font-semibold">권한 확인 중...</p>
+          <p className="text-slate-500 text-sm mt-1">
+            네트워크가 느리면 잠시 걸릴 수 있어요. 계속되면 다시 시도하세요.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <button
+              onClick={refetchProfile}
+              className="px-4 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+            >
+              다시 시도
+            </button>
+            <button
+              onClick={logout}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // 모든 메뉴 아이템 (역할에 따라 필터링)

@@ -178,11 +178,11 @@ export function useUserRole(): UseUserRoleResult {
         const cached = readCachedProfile(session.user.id);
         if (cached) {
           setProfile(cached);
-          setIsLoading(false);
         }
 
-        await fetchProfile(session.user.id, email);
+        // Do not block UI on profile fetch (network can be slow).
         setIsLoading(false);
+        void fetchProfile(session.user.id, email);
       } catch (err) {
         console.warn('Auth check error:', err);
         // If we have a user cached via current state, keep it; otherwise treat as unauthenticated.
