@@ -17,6 +17,49 @@ interface UseUserRoleResult {
   refetchProfile: () => Promise<void>;
 }
 
+const SESSION_TIMEOUT_MS = 15_000;
+const PROFILE_TIMEOUT_MS = 15_000;
+const MAX_RETRIES = 2;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cacheKey(userId: string) {
+  return `allrounder.profile.${userId}`;
+}
+
+function readCachedProfile(userId: string): Profile | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = window.localStorage.getItem(cacheKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Profile> | null;
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (parsed.id !== userId) return null;
+    if (parsed.role !== 'admin' && parsed.role !== 'staff') return null;
+    // Best-effort: tolerate missing timestamps in older cache entries.
+    return {
+      id: userId,
+      created_at: String(parsed.created_at ?? new Date(0).toISOString()),
+      updated_at: String(parsed.updated_at ?? new Date(0).toISOString()),
+      email: String(parsed.email ?? ''),
+      role: parsed.role,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedProfile(profile: Profile) {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(cacheKey(profile.id), JSON.stringify(profile));
+  } catch {
+    // ignore
+  }
+}
+
 export function useUserRole(): UseUserRoleResult {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -34,38 +77,75 @@ export function useUserRole(): UseUserRoleResult {
     ]);
   };
 
+  const withTimeoutAndRetry = async <T,>(
+    fn: () => PromiseLike<T>,
+    timeoutMs: number,
+    retries: number
+  ): Promise<T> => {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await withTimeout(fn(), timeoutMs);
+      } catch (err) {
+        lastErr = err;
+        if (attempt >= retries) break;
+        // linear backoff: 250ms, 500ms, ...
+        await sleep(250 * (attempt + 1));
+      }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('unknown_error');
+  };
+
   // 프로필 가져오기
   const fetchProfile = async (userId: string, userEmail: string) => {
     try {
-      const { data, error } = await withTimeout(
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        7000
+      const { data, error } = await withTimeoutAndRetry(
+        () => supabase.from('profiles').select('*').eq('id', userId).single(),
+        PROFILE_TIMEOUT_MS,
+        MAX_RETRIES
       );
 
       if (error) {
         // 프로필이 없으면 기본값으로 staff 설정
-        console.warn('Profile not found, using default staff role');
-        setProfile({
-          id: userId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          email: userEmail,
-          role: 'staff',
-        });
-        return;
+        // NOTE:
+        // - Do NOT downgrade to staff for transient errors.
+        // - Only fallback to staff when the row is genuinely missing.
+        const code = (error as unknown as { code?: string }).code;
+        const msg = String((error as unknown as { message?: string }).message ?? '');
+        const isMissingRow =
+          code === 'PGRST116' ||
+          /0 rows/i.test(msg) ||
+          /no rows/i.test(msg) ||
+          /Results contain 0 rows/i.test(msg);
+
+        if (isMissingRow) {
+          console.warn('Profile row missing; using default staff role');
+          const fallback: Profile = {
+            id: userId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            email: userEmail,
+            role: 'staff',
+          };
+          setProfile(fallback);
+          writeCachedProfile(fallback);
+          return;
+        }
+
+        throw error;
       }
 
       setProfile(data);
+      writeCachedProfile(data);
     } catch (err) {
-      console.error('Error fetching profile:', err);
-      // 에러 발생 시에도 기본값 설정
-      setProfile({
-        id: userId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        email: userEmail,
-        role: 'staff',
-      });
+      console.warn('Error fetching profile (will keep cached role if available):', err);
+      const cached = readCachedProfile(userId);
+      if (cached) {
+        setProfile(cached);
+        return;
+      }
+      // No cache to fall back to — keep profile null so UI can decide.
+      setProfile(null);
     }
   };
 
@@ -78,7 +158,11 @@ export function useUserRole(): UseUserRoleResult {
       try {
         const {
           data: { session },
-        } = await withTimeout(supabase.auth.getSession(), 7000);
+        } = await withTimeoutAndRetry(
+          () => supabase.auth.getSession(),
+          SESSION_TIMEOUT_MS,
+          MAX_RETRIES
+        );
         
         if (!session) {
           setUser(null);
@@ -88,12 +172,21 @@ export function useUserRole(): UseUserRoleResult {
         }
         
         setUser(session.user);
-        await fetchProfile(session.user.id, session.user.email || '');
+        const email = session.user.email || '';
+
+        // Use cached role immediately to prevent flicker on slow networks.
+        const cached = readCachedProfile(session.user.id);
+        if (cached) {
+          setProfile(cached);
+          setIsLoading(false);
+        }
+
+        await fetchProfile(session.user.id, email);
         setIsLoading(false);
       } catch (err) {
-        console.error('Auth check error:', err);
-        setUser(null);
-        setProfile(null);
+        console.warn('Auth check error:', err);
+        // If we have a user cached via current state, keep it; otherwise treat as unauthenticated.
+        setUser((prev) => prev ?? null);
         setIsLoading(false);
       }
     };
@@ -107,7 +200,10 @@ export function useUserRole(): UseUserRoleResult {
         setProfile(null);
       } else if (event === 'SIGNED_IN' && session) {
         setUser(session.user);
-        await fetchProfile(session.user.id, session.user.email || '');
+        const email = session.user.email || '';
+        const cached = readCachedProfile(session.user.id);
+        if (cached) setProfile(cached);
+        await fetchProfile(session.user.id, email);
       }
     });
 
