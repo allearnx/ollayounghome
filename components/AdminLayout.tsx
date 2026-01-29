@@ -106,7 +106,7 @@ const adminOnlyMenuItems: MenuItem[] = [
 export default function AdminLayout({ children, requiredRole = 'staff' }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, isAdmin, isLoading, logout, refetchProfile } = useUserRole();
+  const { user, role, isAdmin, isLoading, authCheckStatus, logout, retryAuth, refetchProfile } = useUserRole();
   
   // 비밀번호 변경 모달 상태
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -120,7 +120,7 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
   useEffect(() => {
     if (!isLoading) {
       // 로그인하지 않은 경우
-      if (!user) {
+      if (!user && authCheckStatus !== 'degraded') {
         router.push('/login');
         return;
       }
@@ -216,6 +216,33 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
   }
 
   // 인증되지 않은 경우 (리다이렉트 중)
+  if (!user && authCheckStatus === 'degraded') {
+    return (
+      <div className="min-h-screen bg-violet-50/30 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-violet-100 shadow-sm p-6 text-center">
+          <p className="text-slate-800 font-bold text-lg">인증 확인이 지연되고 있어요</p>
+          <p className="text-slate-500 text-sm mt-1">
+            네트워크가 느리거나 Supabase 응답이 지연될 때 발생할 수 있습니다.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <button
+              onClick={retryAuth}
+              className="px-4 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+            >
+              다시 시도
+            </button>
+            <button
+              onClick={logout}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return null;
   }

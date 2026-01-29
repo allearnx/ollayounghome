@@ -13,11 +13,13 @@ interface UseUserRoleResult {
   isStaff: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authCheckStatus: 'loading' | 'ready' | 'degraded';
   logout: () => Promise<void>;
+  retryAuth: () => Promise<void>;
   refetchProfile: () => Promise<void>;
 }
 
-const SESSION_TIMEOUT_MS = 15_000;
+const SESSION_TIMEOUT_MS = 2_500;
 const PROFILE_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 2;
 
@@ -65,6 +67,7 @@ export function useUserRole(): UseUserRoleResult {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authCheckStatus, setAuthCheckStatus] = useState<'loading' | 'ready' | 'degraded'>('loading');
   const initialCheckDone = useRef(false);
 
   const withTimeout = async <T,>(promiseLike: PromiseLike<T>, ms: number): Promise<T> => {
@@ -158,16 +161,13 @@ export function useUserRole(): UseUserRoleResult {
       try {
         const {
           data: { session },
-        } = await withTimeoutAndRetry(
-          () => supabase.auth.getSession(),
-          SESSION_TIMEOUT_MS,
-          MAX_RETRIES
-        );
+        } = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS);
         
         if (!session) {
           setUser(null);
           setProfile(null);
           setIsLoading(false);
+          setAuthCheckStatus('ready');
           return;
         }
         
@@ -182,11 +182,12 @@ export function useUserRole(): UseUserRoleResult {
 
         // Do not block UI on profile fetch (network can be slow).
         setIsLoading(false);
+        setAuthCheckStatus('ready');
         void fetchProfile(session.user.id, email);
       } catch (err) {
         console.warn('Auth check error:', err);
-        // If we have a user cached via current state, keep it; otherwise treat as unauthenticated.
-        setUser((prev) => prev ?? null);
+        // Don't force logout on transient auth timeouts. Let UI offer retry.
+        setAuthCheckStatus('degraded');
         setIsLoading(false);
       }
     };
@@ -198,12 +199,14 @@ export function useUserRole(): UseUserRoleResult {
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
         setProfile(null);
+        setAuthCheckStatus('ready');
       } else if (event === 'SIGNED_IN' && session) {
         setUser(session.user);
         const email = session.user.email || '';
         const cached = readCachedProfile(session.user.id);
         if (cached) setProfile(cached);
         await fetchProfile(session.user.id, email);
+        setAuthCheckStatus('ready');
       }
     });
 
@@ -216,6 +219,36 @@ export function useUserRole(): UseUserRoleResult {
   const logout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
+  };
+
+  const retryAuth = async () => {
+    setIsLoading(true);
+    setAuthCheckStatus('loading');
+    try {
+      const {
+        data: { session },
+      } = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS);
+
+      if (!session) {
+        setUser(null);
+        setProfile(null);
+        setAuthCheckStatus('ready');
+        return;
+      }
+
+      setUser(session.user);
+      const email = session.user.email || '';
+      const cached = readCachedProfile(session.user.id);
+      if (cached) setProfile(cached);
+      setAuthCheckStatus('ready');
+      // Allow UI to render immediately; fetch profile in background.
+      void fetchProfile(session.user.id, email);
+    } catch (err) {
+      console.warn('Auth retry error:', err);
+      setAuthCheckStatus('degraded');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 프로필 다시 가져오기
@@ -235,7 +268,9 @@ export function useUserRole(): UseUserRoleResult {
     isStaff: role === 'staff',
     isLoading,
     isAuthenticated: !!user,
+    authCheckStatus,
     logout,
+    retryAuth,
     refetchProfile,
   };
 }
