@@ -6,8 +6,8 @@ interface PaymentWidgetProps {
   amount: number;
   orderName: string;
   orderId: string;
-  customerName?: string;
-  customerPhone?: string;
+  customerName: string;
+  customerPhone: string;
   customerEmail?: string;
   onFail?: (errorCode: string, errorMessage: string) => void;
 }
@@ -109,6 +109,15 @@ export default function PaymentWidget({
       return;
     }
 
+    if (!customerName.trim()) {
+      setError('학생이름을 입력해주세요.');
+      return;
+    }
+    if (!customerPhone.trim()) {
+      setError('학부모 연락처를 입력해주세요.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -142,8 +151,8 @@ export default function PaymentWidget({
         amount: latestInfo.amount,
         orderId: latestInfo.order_id,
         orderName: latestInfo.courses?.title || resolvedOrderName,
-        customerName: customerName || '고객',
-        customerMobilePhone: customerPhone?.replace(/-/g, ''),
+        customerName: customerName.trim(),
+        customerMobilePhone: customerPhone.replace(/\D/g, ''),
         customerEmail: customerEmail || undefined,
         successUrl: `${window.location.origin}/payment/success`,
         failUrl: `${window.location.origin}/payment/fail`,
