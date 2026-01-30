@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     title TEXT NOT NULL,
-    category TEXT NOT NULL CHECK (category IN ('grammar', 'school_exam', 'international', 'voca')),
+    category TEXT NOT NULL CHECK (category IN ('grammar', 'school_exam', 'international', 'voca', 'reading')),
     description TEXT DEFAULT '',
     price INTEGER DEFAULT 0,
     thumbnail_url TEXT DEFAULT '',

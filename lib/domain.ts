@@ -47,7 +47,7 @@ export const IMAGE_POSITION_OPTIONS = [
 ];
 
 // 강의 카테고리 타입
-export type CourseCategory = 'grammar' | 'school_exam' | 'international' | 'voca';
+export type CourseCategory = 'grammar' | 'school_exam' | 'international' | 'voca' | 'reading';
 
 // 강의 데이터 타입 정의
 export interface Course {
@@ -73,6 +73,7 @@ export const CATEGORY_LABELS: Record<CourseCategory, string> = {
   school_exam: '내신',
   international: '국제학교/유학생',
   voca: '올톡보카',
+  reading: '리딩',
 };
 
 // 상태 라벨 매핑
