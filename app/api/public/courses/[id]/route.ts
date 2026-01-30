@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { getSupabasePublic } from '@/lib/supabase.public.server';
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabasePublic();
     const courseId = params.id;
 
     const { data, error } = await supabase

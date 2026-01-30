@@ -414,7 +414,7 @@ export default function CourseDetailPage() {
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      이름 <span className="text-red-500">*</span>
+                      학생이름 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -427,7 +427,7 @@ export default function CourseDetailPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      연락처 <span className="text-red-500">*</span>
+                      학부모 연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"

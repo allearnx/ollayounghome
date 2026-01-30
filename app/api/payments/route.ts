@@ -112,6 +112,61 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH: 결제자 정보(학생이름/학부모 연락처) 업데이트 (order_id 기준)
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = getSupabaseAdmin();
+    const body = (await request.json()) as { orderId?: string; customerName?: string; customerPhone?: string };
+
+    const orderId = (body.orderId ?? '').trim();
+    const customerName = (body.customerName ?? '').trim();
+    const customerPhone = (body.customerPhone ?? '').trim();
+
+    if (!orderId) {
+      return NextResponse.json({ error: '주문 ID가 필요합니다.' }, { status: 400 });
+    }
+    if (!customerName) {
+      return NextResponse.json({ error: '학생이름이 필요합니다.' }, { status: 400 });
+    }
+    if (!customerPhone) {
+      return NextResponse.json({ error: '학부모 연락처가 필요합니다.' }, { status: 400 });
+    }
+
+    // Only allow updating while pending to prevent post-payment tampering
+    const { data: existing, error: fetchErr } = await supabase
+      .from('payments')
+      .select('status')
+      .eq('order_id', orderId)
+      .single();
+
+    if (fetchErr || !existing) {
+      return NextResponse.json({ error: '결제 정보를 찾을 수 없습니다.' }, { status: 404 });
+    }
+    if (existing.status !== 'pending') {
+      return NextResponse.json({ error: '진행 중인 결제만 정보를 수정할 수 있습니다.' }, { status: 400 });
+    }
+
+    const { error: updateErr } = await supabase
+      .from('payments')
+      .update({
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('order_id', orderId);
+
+    if (updateErr) {
+      console.error('Payment PATCH updateErr:', updateErr);
+      return NextResponse.json({ error: '결제자 정보를 저장할 수 없습니다.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Payment PATCH error:', error);
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 });
+  }
+}
+
 // GET: 결제 정보 조회
 export async function GET(request: NextRequest) {
   try {
@@ -134,8 +189,10 @@ export async function GET(request: NextRequest) {
         order_id,
         amount,
         status,
+        customer_name,
+        customer_phone,
         courses (id, title, price),
-        students (id, student_name)
+        students (id, student_name, parent_phone)
       `)
       .eq('order_id', orderId)
       .single();

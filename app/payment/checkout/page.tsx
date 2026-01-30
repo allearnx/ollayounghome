@@ -9,8 +9,10 @@ interface PaymentInfo {
   order_id: string;
   amount: number;
   status: string;
+  customer_name: string | null;
+  customer_phone: string | null;
   courses: { title: string } | null;
-  students: { student_name: string } | null;
+  students: { student_name: string; parent_phone: string } | null;
 }
 
 function CheckoutContent() {
@@ -20,6 +22,10 @@ function CheckoutContent() {
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState('');
+  const [parentPhone, setParentPhone] = useState('');
+  const [isSavingPayer, setIsSavingPayer] = useState(false);
+  const [payerError, setPayerError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPaymentInfo = async () => {
@@ -45,6 +51,9 @@ function CheckoutContent() {
           setError('결제에 실패한 주문입니다. 다시 시도해주세요.');
         } else {
           setPaymentInfo(data);
+          // Prefill from DB/student if present
+          setStudentName(data.students?.student_name || data.customer_name || '');
+          setParentPhone(data.students?.parent_phone || data.customer_phone || '');
         }
       } catch (err) {
         console.error('Error fetching payment info:', err);
@@ -96,6 +105,43 @@ function CheckoutContent() {
   const orderName = paymentInfo.courses?.title || 
     (paymentInfo.students?.student_name ? `${paymentInfo.students.student_name} 수강료` : '수강료 결제');
 
+  const canPay = !!studentName.trim() && !!parentPhone.trim();
+
+  const savePayerInfo = async () => {
+    if (!orderId) return;
+    setPayerError(null);
+    if (!studentName.trim()) {
+      setPayerError('학생이름을 입력해주세요.');
+      return;
+    }
+    if (!parentPhone.trim()) {
+      setPayerError('학부모 연락처를 입력해주세요.');
+      return;
+    }
+    setIsSavingPayer(true);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          customerName: studentName.trim(),
+          customerPhone: parentPhone.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || '결제자 정보를 저장할 수 없습니다.');
+      }
+      // reflect locally
+      setPaymentInfo((prev) => (prev ? { ...prev, customer_name: studentName.trim(), customer_phone: parentPhone.trim() } : prev));
+    } catch (e) {
+      setPayerError(e instanceof Error ? e.message : '결제자 정보를 저장할 수 없습니다.');
+    } finally {
+      setIsSavingPayer(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 py-12 px-4">
       <div className="max-w-lg mx-auto">
@@ -129,13 +175,64 @@ function CheckoutContent() {
             </div>
           </div>
 
+          {/* 결제자(학생/학부모) 정보 입력 */}
+          <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">결제 정보 입력</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  학생이름 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  placeholder="학생이름 입력"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none bg-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  학부모 연락처 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={parentPhone}
+                  onChange={(e) => setParentPhone(e.target.value)}
+                  placeholder="010-1234-5678"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none bg-white"
+                  required
+                />
+                <p className="mt-1 text-xs text-slate-400">하이픈(-) 포함 입력 가능</p>
+              </div>
+
+              {payerError && <p className="text-sm text-red-600 font-medium">{payerError}</p>}
+
+              <button
+                onClick={savePayerInfo}
+                disabled={isSavingPayer || !canPay}
+                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSavingPayer ? '저장 중...' : '정보 저장'}
+              </button>
+            </div>
+          </div>
+
           {/* 결제 위젯 */}
-          <PaymentWidget
-            amount={paymentInfo.amount}
-            orderName={orderName}
-            orderId={paymentInfo.order_id}
-            customerName={paymentInfo.students?.student_name || undefined}
-          />
+          {canPay ? (
+            <PaymentWidget
+              amount={paymentInfo.amount}
+              orderName={orderName}
+              orderId={paymentInfo.order_id}
+              customerName={studentName.trim()}
+              customerPhone={parentPhone.trim()}
+            />
+          ) : (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+              결제를 진행하려면 학생이름과 학부모 연락처를 입력해주세요.
+            </div>
+          )}
         </div>
 
         {/* 안내 문구 */}

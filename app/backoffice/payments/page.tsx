@@ -158,9 +158,21 @@ export default function PaymentsPage() {
     const student = students.find(s => s.id === selectedStudent);
     
     const amount = customAmount ? parseInt(customAmount) : (course?.price || 0);
+
+    const finalName = (customerName || student?.student_name || '').trim();
+    const finalPhone = (customerPhone || student?.parent_phone || '').trim();
     
     if (amount <= 0) {
       alert('결제 금액을 입력해주세요.');
+      return;
+    }
+
+    if (!finalName) {
+      alert('학생이름을 입력해주세요.');
+      return;
+    }
+    if (!finalPhone) {
+      alert('학부모 연락처를 입력해주세요.');
       return;
     }
 
@@ -174,8 +186,8 @@ export default function PaymentsPage() {
           studentId: selectedStudent || null,
           courseId: selectedCourse || null,
           amount,
-          customerName: customerName || student?.student_name || null,
-          customerPhone: customerPhone || student?.parent_phone || null,
+          customerName: finalName,
+          customerPhone: finalPhone,
         }),
       });
 
@@ -651,21 +663,22 @@ export default function PaymentsPage() {
                   {/* 고객 이름 */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      고객 이름 <span className="text-slate-400">(선택)</span>
+                      학생이름 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="홍길동"
+                      placeholder="학생이름 입력"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none"
+                      required
                     />
                   </div>
 
                   {/* 고객 연락처 */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      고객 연락처 <span className="text-slate-400">(선택)</span>
+                      학부모 연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -673,7 +686,9 @@ export default function PaymentsPage() {
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="010-1234-5678"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none"
+                      required
                     />
+                    <p className="mt-1 text-xs text-slate-400">하이픈(-) 포함 입력 가능</p>
                   </div>
 
                   <div className="flex gap-3 pt-4">
