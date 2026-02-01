@@ -106,7 +106,7 @@ const adminOnlyMenuItems: MenuItem[] = [
 export default function AdminLayout({ children, requiredRole = 'staff' }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, isAdmin, isLoading, authCheckStatus, logout, retryAuth, refetchProfile } = useUserRole();
+  const { user, role, isAdmin, isLoading, isAuthSlow, authCheckStatus, logout, retryAuth, refetchProfile } = useUserRole();
   
   // 비밀번호 변경 모달 상태
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -204,7 +204,29 @@ export default function AdminLayout({ children, requiredRole = 'staff' }: AdminL
   if (isLoading) {
     return (
       <div className="min-h-screen bg-violet-50/30 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md w-full px-4">
+          {isAuthSlow && (
+            <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
+              <p className="text-sm font-semibold text-amber-800">인증 확인이 지연되고 있어요</p>
+              <p className="text-xs text-amber-700 mt-1">
+                네트워크가 느리거나 토큰 갱신이 필요하면 잠시 걸릴 수 있습니다. 자동으로 복구되면 목록이 갱신됩니다.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={retryAuth}
+                  className="px-3 py-2 text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+                >
+                  다시 시도
+                </button>
+                <button
+                  onClick={logout}
+                  className="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          )}
           <svg className="animate-spin h-12 w-12 text-violet-500 mx-auto mb-4" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />

@@ -13,13 +13,18 @@ interface UseUserRoleResult {
   isStaff: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAuthSlow: boolean;
   authCheckStatus: 'loading' | 'ready' | 'degraded';
   logout: () => Promise<void>;
   retryAuth: () => Promise<void>;
   refetchProfile: () => Promise<void>;
 }
 
-const SESSION_TIMEOUT_MS = 2_500;
+// NOTE:
+// - Session retrieval can be slow when tokens refresh or network is congested.
+// - We show a "slow" banner after a short delay, but we should not fail fast.
+const SESSION_SLOW_MS = 3_000;
+const SESSION_HARD_TIMEOUT_MS = 30_000;
 const PROFILE_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 2;
 
@@ -67,6 +72,7 @@ export function useUserRole(): UseUserRoleResult {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthSlow, setIsAuthSlow] = useState(false);
   const [authCheckStatus, setAuthCheckStatus] = useState<'loading' | 'ready' | 'degraded'>('loading');
   const initialCheckDone = useRef(false);
 
@@ -157,11 +163,36 @@ export function useUserRole(): UseUserRoleResult {
     if (initialCheckDone.current) return;
     initialCheckDone.current = true;
 
+    let cancelled = false;
+    let slowTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const setAuthSlowSafe = (v: boolean) => {
+      if (!cancelled) setIsAuthSlow(v);
+    };
+
+    const stopSlowTimer = () => {
+      if (slowTimer) clearTimeout(slowTimer);
+      slowTimer = null;
+      setAuthSlowSafe(false);
+    };
+
+    const startSlowTimer = () => {
+      stopSlowTimer();
+      slowTimer = setTimeout(() => {
+        setAuthSlowSafe(true);
+      }, SESSION_SLOW_MS);
+    };
+
     const checkAuth = async () => {
       try {
+        setAuthSlowSafe(false);
+        startSlowTimer();
         const {
           data: { session },
-        } = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS);
+        } = await withTimeout(supabase.auth.getSession(), SESSION_HARD_TIMEOUT_MS);
+
+        stopSlowTimer();
+        if (cancelled) return;
         
         if (!session) {
           setUser(null);
@@ -186,7 +217,9 @@ export function useUserRole(): UseUserRoleResult {
         void fetchProfile(session.user.id, email);
       } catch (err) {
         console.warn('Auth check error:', err);
-        // Don't force logout on transient auth timeouts. Let UI offer retry.
+        // Only mark degraded on real failures (not simple slowness).
+        stopSlowTimer();
+        if (cancelled) return;
         setAuthCheckStatus('degraded');
         setIsLoading(false);
       }
@@ -211,6 +244,8 @@ export function useUserRole(): UseUserRoleResult {
     });
 
     return () => {
+      cancelled = true;
+      stopSlowTimer();
       subscription.unsubscribe();
     };
   }, []);
@@ -222,12 +257,28 @@ export function useUserRole(): UseUserRoleResult {
   };
 
   const retryAuth = async () => {
+    let slowTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    const startSlowTimer = () => {
+      slowTimer = setTimeout(() => {
+        if (!cancelled) setIsAuthSlow(true);
+      }, SESSION_SLOW_MS);
+    };
+
     setIsLoading(true);
     setAuthCheckStatus('loading');
     try {
       const {
         data: { session },
-      } = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS);
+      } = await (async () => {
+        setIsAuthSlow(false);
+        startSlowTimer();
+        return await withTimeout(supabase.auth.getSession(), SESSION_HARD_TIMEOUT_MS);
+      })();
+
+      cancelled = true;
+      if (slowTimer) clearTimeout(slowTimer);
+      setIsAuthSlow(false);
 
       if (!session) {
         setUser(null);
@@ -245,6 +296,9 @@ export function useUserRole(): UseUserRoleResult {
       void fetchProfile(session.user.id, email);
     } catch (err) {
       console.warn('Auth retry error:', err);
+      cancelled = true;
+      if (slowTimer) clearTimeout(slowTimer);
+      setIsAuthSlow(false);
       setAuthCheckStatus('degraded');
     } finally {
       setIsLoading(false);
@@ -268,6 +322,7 @@ export function useUserRole(): UseUserRoleResult {
     isStaff: role === 'staff',
     isLoading,
     isAuthenticated: !!user,
+    isAuthSlow,
     authCheckStatus,
     logout,
     retryAuth,
