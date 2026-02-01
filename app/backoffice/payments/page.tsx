@@ -128,6 +128,7 @@ export default function PaymentsPage() {
       }
 
       const response = await fetch('/api/admin/overview?limit=50', {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
