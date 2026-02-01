@@ -5,6 +5,7 @@ import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
 import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // 주문 ID 생성 함수
 function generateOrderId(): string {
