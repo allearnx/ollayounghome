@@ -26,6 +26,7 @@ interface UseUserRoleResult {
 const SESSION_SLOW_MS = 3_000;
 const SESSION_HARD_TIMEOUT_MS = 30_000;
 const PROFILE_TIMEOUT_MS = 15_000;
+const PROFILE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_RETRIES = 2;
 
 function sleep(ms: number) {
@@ -34,6 +35,23 @@ function sleep(ms: number) {
 
 function cacheKey(userId: string) {
   return `allrounder.profile.${userId}`;
+}
+
+function cacheFetchedAtKey(userId: string) {
+  return `allrounder.profile.fetchedAt.${userId}`;
+}
+
+function readCachedFetchedAt(userId: string): number | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = window.localStorage.getItem(cacheFetchedAtKey(userId));
+    if (!raw) return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
+  } catch {
+    return null;
+  }
 }
 
 function readCachedProfile(userId: string): Profile | null {
@@ -67,6 +85,15 @@ function writeCachedProfile(profile: Profile) {
   }
 }
 
+function writeCachedFetchedAt(userId: string, fetchedAtMs: number) {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(cacheFetchedAtKey(userId), String(fetchedAtMs));
+  } catch {
+    // ignore
+  }
+}
+
 export function useUserRole(): UseUserRoleResult {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -75,6 +102,7 @@ export function useUserRole(): UseUserRoleResult {
   const [isAuthSlow, setIsAuthSlow] = useState(false);
   const [authCheckStatus, setAuthCheckStatus] = useState<'loading' | 'ready' | 'degraded'>('loading');
   const initialCheckDone = useRef(false);
+  const inFlightProfile = useRef<{ userId: string; promise: Promise<void> } | null>(null);
 
   const withTimeout = async <T,>(promiseLike: PromiseLike<T>, ms: number): Promise<T> => {
     const promise = Promise.resolve(promiseLike);
@@ -106,55 +134,88 @@ export function useUserRole(): UseUserRoleResult {
   };
 
   // 프로필 가져오기
-  const fetchProfile = async (userId: string, userEmail: string) => {
-    try {
-      const { data, error } = await withTimeoutAndRetry(
-        () => supabase.from('profiles').select('*').eq('id', userId).single(),
-        PROFILE_TIMEOUT_MS,
-        MAX_RETRIES
-      );
+  const fetchProfile = async (
+    userId: string,
+    userEmail: string,
+    options?: { force?: boolean }
+  ) => {
+    // Always hydrate from cache first to keep UI responsive.
+    const cached = readCachedProfile(userId);
+    if (cached) setProfile(cached);
 
-      if (error) {
-        // 프로필이 없으면 기본값으로 staff 설정
-        // NOTE:
-        // - Do NOT downgrade to staff for transient errors.
-        // - Only fallback to staff when the row is genuinely missing.
-        const code = (error as unknown as { code?: string }).code;
-        const msg = String((error as unknown as { message?: string }).message ?? '');
-        const isMissingRow =
-          code === 'PGRST116' ||
-          /0 rows/i.test(msg) ||
-          /no rows/i.test(msg) ||
-          /Results contain 0 rows/i.test(msg);
+    const lastFetchedAt = readCachedFetchedAt(userId);
+    const isFresh = lastFetchedAt !== null && Date.now() - lastFetchedAt < PROFILE_TTL_MS;
+    if (!options?.force && cached && isFresh) {
+      return;
+    }
 
-        if (isMissingRow) {
-          console.warn('Profile row missing; using default staff role');
-          const fallback: Profile = {
-            id: userId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            email: userEmail,
-            role: 'staff',
-          };
-          setProfile(fallback);
-          writeCachedProfile(fallback);
-          return;
+    // Dedupe in-flight requests for the same userId.
+    if (inFlightProfile.current?.userId === userId) {
+      await inFlightProfile.current.promise;
+      return;
+    }
+
+    const promise = (async () => {
+      try {
+        const { data, error } = await withTimeoutAndRetry(
+          () => supabase.from('profiles').select('*').eq('id', userId).single(),
+          PROFILE_TIMEOUT_MS,
+          MAX_RETRIES
+        );
+
+        if (error) {
+          // 프로필이 없으면 기본값으로 staff 설정
+          // NOTE:
+          // - Do NOT downgrade to staff for transient errors.
+          // - Only fallback to staff when the row is genuinely missing.
+          const code = (error as unknown as { code?: string }).code;
+          const msg = String((error as unknown as { message?: string }).message ?? '');
+          const isMissingRow =
+            code === 'PGRST116' ||
+            /0 rows/i.test(msg) ||
+            /no rows/i.test(msg) ||
+            /Results contain 0 rows/i.test(msg);
+
+          if (isMissingRow) {
+            console.warn('Profile row missing; using default staff role');
+            const fallback: Profile = {
+              id: userId,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              email: userEmail,
+              role: 'staff',
+            };
+            setProfile(fallback);
+            writeCachedProfile(fallback);
+            writeCachedFetchedAt(userId, Date.now());
+            return;
+          }
+
+          throw error;
         }
 
-        throw error;
+        setProfile(data);
+        writeCachedProfile(data);
+        writeCachedFetchedAt(userId, Date.now());
+      } catch (err) {
+        console.warn('Error fetching profile (will keep cached role if available):', err);
+        const cachedAfterErr = readCachedProfile(userId);
+        if (cachedAfterErr) {
+          setProfile(cachedAfterErr);
+          return;
+        }
+        // No cache to fall back to — keep profile null so UI can decide.
+        setProfile(null);
       }
+    })();
 
-      setProfile(data);
-      writeCachedProfile(data);
-    } catch (err) {
-      console.warn('Error fetching profile (will keep cached role if available):', err);
-      const cached = readCachedProfile(userId);
-      if (cached) {
-        setProfile(cached);
-        return;
+    inFlightProfile.current = { userId, promise };
+    try {
+      await promise;
+    } finally {
+      if (inFlightProfile.current?.userId === userId) {
+        inFlightProfile.current = null;
       }
-      // No cache to fall back to — keep profile null so UI can decide.
-      setProfile(null);
     }
   };
 
@@ -238,7 +299,7 @@ export function useUserRole(): UseUserRoleResult {
         const email = session.user.email || '';
         const cached = readCachedProfile(session.user.id);
         if (cached) setProfile(cached);
-        await fetchProfile(session.user.id, email);
+        void fetchProfile(session.user.id, email);
         setAuthCheckStatus('ready');
       }
     });
@@ -308,7 +369,7 @@ export function useUserRole(): UseUserRoleResult {
   // 프로필 다시 가져오기
   const refetchProfile = async () => {
     if (user) {
-      await fetchProfile(user.id, user.email || '');
+      await fetchProfile(user.id, user.email || '', { force: true });
     }
   };
 
