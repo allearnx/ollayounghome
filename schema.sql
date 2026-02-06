@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS students (
 
 -- 기존 테이블에 grade 컬럼 추가 (이미 테이블이 있는 경우)
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS grade TEXT DEFAULT '';
+-- 상담 신청 여부 플래그 (결제관리에서 등록된 학생은 숨김)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS is_consultation BOOLEAN DEFAULT true;
 
 -- 인덱스 생성 (조회 성능 향상)
 CREATE INDEX IF NOT EXISTS idx_students_created_at ON students(created_at DESC);

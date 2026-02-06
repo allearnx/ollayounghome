@@ -16,6 +16,7 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from('students')
         .select('*')
+        .eq('is_consultation', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
