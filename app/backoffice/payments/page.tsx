@@ -4,20 +4,26 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 
-interface Payment {
+// 통합 결제 타입 (PG + 수동)
+interface IntegratedPayment {
   id: string;
-  created_at: string;
-  order_id: string;
-  payment_key: string | null;
+  type: 'PG' | 'MANUAL';
   amount: number;
   status: string;
   method: string | null;
-  receipt_url: string | null;
   paid_at: string | null;
-  customer_name: string | null;
-  customer_phone: string | null;
-  students: { id: string; student_name: string; parent_phone: string } | null;
-  courses: { id: string; title: string; price: number } | null;
+  created_at: string;
+  student: { id: string; student_name: string; parent_phone: string } | null;
+  course: { id: string; title: string; price: number } | null;
+  // PG 전용
+  order_id?: string;
+  payment_key?: string;
+  receipt_url?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  // 수동 결제 전용
+  category?: string;  // TUITION, MATERIAL
+  memo?: string;
 }
 
 interface Student {
@@ -70,11 +76,27 @@ interface PaymentDetail {
   isPartialCancelable: boolean;
 }
 
+// 수동 결제 결제수단 한글 변환
+const MANUAL_METHOD_LABELS: Record<string, string> = {
+  CASH: '현금',
+  PAYMENT_TEACHER: '결제선생',
+  TRANSFER: '계좌이체',
+};
+
+// 수동 결제 카테고리 한글 변환
+const MANUAL_CATEGORY_LABELS: Record<string, string> = {
+  TUITION: '수강료',
+  MATERIAL: '교재비',
+};
+
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<IntegratedPayment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 필터 탭
+  const [filterTab, setFilterTab] = useState<'all' | 'card' | 'cash'>('all');
   
   // 청구서 생성 모달
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -87,25 +109,45 @@ export default function PaymentsPage() {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
+  // 수동 결제 등록 모달
+  const [showManualPaymentModal, setShowManualPaymentModal] = useState(false);
+  const [manualPayment, setManualPayment] = useState({
+    student_id: '',
+    course_id: '',
+    amount: '',
+    category: 'TUITION',
+    method: 'CASH',
+    memo: '',
+    paid_at: new Date().toISOString().slice(0, 10),
+  });
+  const [isCreatingManualPayment, setIsCreatingManualPayment] = useState(false);
+
   // 결제 상세 모달
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<IntegratedPayment | null>(null);
   const [paymentDetail, setPaymentDetail] = useState<PaymentDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
   // 환불 모달
   const [showRefundModal, setShowRefundModal] = useState(false);
-  const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
+  const [refundPayment, setRefundPayment] = useState<IntegratedPayment | null>(null);
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState<string>('');
   const [isPartialRefund, setIsPartialRefund] = useState(false);
   const [isProcessingRefund, setIsProcessingRefund] = useState(false);
 
-  // 통계
-  const pendingCount = payments.filter(p => p.status === 'pending').length;
-  const paidCount = payments.filter(p => p.status === 'paid').length;
-  const cancelledCount = payments.filter(p => p.status === 'cancelled' || p.status === 'failed').length;
+  // 필터링된 결제 목록
+  const filteredPayments = payments.filter((p) => {
+    if (filterTab === 'all') return true;
+    if (filterTab === 'card') return p.type === 'PG'; // PG = 카드
+    return p.type === 'MANUAL'; // 현금/기타 = 수동 결제
+  });
+
+  // 통계 (필터 적용)
+  const pendingCount = filteredPayments.filter(p => p.status === 'pending').length;
+  const paidCount = filteredPayments.filter(p => p.status === 'paid').length;
+  const cancelledCount = filteredPayments.filter(p => p.status === 'cancelled' || p.status === 'failed').length;
 
   useEffect(() => {
     fetchData();
@@ -127,23 +169,33 @@ export default function PaymentsPage() {
         return;
       }
 
-      const response = await fetch('/api/admin/overview?limit=50', {
-        cache: 'no-store',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      const data = await response.json();
+      // 통합 결제 내역과 학생/강좌 목록을 병렬로 조회
+      const [paymentsRes, overviewRes] = await Promise.all([
+        fetch('/api/admin/integrated-payments?limit=100', {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+        fetch('/api/admin/overview?limit=50', {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(data.error || '데이터를 불러올 수 없습니다.');
+      const paymentsData = await paymentsRes.json();
+      const overviewData = await overviewRes.json();
+
+      if (!paymentsRes.ok) {
+        throw new Error(paymentsData.error || '결제 내역을 불러올 수 없습니다.');
+      }
+      if (!overviewRes.ok) {
+        throw new Error(overviewData.error || '데이터를 불러올 수 없습니다.');
       }
 
-      setPayments(data.payments || []);
-      setStudents(data.students || []);
-      setCourses(data.courses || []);
+      setPayments(paymentsData.payments || []);
+      setStudents(overviewData.students || []);
+      setCourses(overviewData.courses || []);
     } catch (err) {
-      console.error('Admin overview fetch error:', err);
+      console.error('Admin payments fetch error:', err);
       setPayments([]);
       setStudents([]);
       setCourses([]);
@@ -248,8 +300,82 @@ export default function PaymentsPage() {
     setGeneratedLink(null);
   };
 
+  // 수동 결제 등록
+  const createManualPayment = async () => {
+    if (!manualPayment.student_id) {
+      alert('학생을 선택해주세요.');
+      return;
+    }
+    if (!manualPayment.course_id) {
+      alert('강좌를 선택해주세요.');
+      return;
+    }
+    if (!manualPayment.amount || parseInt(manualPayment.amount) <= 0) {
+      alert('유효한 금액을 입력해주세요.');
+      return;
+    }
+
+    setIsCreatingManualPayment(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('인증이 필요합니다.');
+      }
+
+      const response = await fetch('/api/manual-payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          student_id: manualPayment.student_id,
+          course_id: manualPayment.course_id,
+          amount: parseInt(manualPayment.amount),
+          category: manualPayment.category,
+          method: manualPayment.method,
+          memo: manualPayment.memo || null,
+          paid_at: manualPayment.paid_at ? new Date(manualPayment.paid_at).toISOString() : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '수기 결제 등록에 실패했습니다.');
+      }
+
+      alert('수기 결제가 등록되었습니다.');
+      closeManualPaymentModal();
+      fetchData();
+    } catch (error) {
+      console.error('Manual payment creation error:', error);
+      alert(error instanceof Error ? error.message : '수기 결제 등록에 실패했습니다.');
+    } finally {
+      setIsCreatingManualPayment(false);
+    }
+  };
+
+  // 수동 결제 모달 닫기
+  const closeManualPaymentModal = () => {
+    setShowManualPaymentModal(false);
+    setManualPayment({
+      student_id: '',
+      course_id: '',
+      amount: '',
+      category: 'TUITION',
+      method: 'CASH',
+      memo: '',
+      paid_at: new Date().toISOString().slice(0, 10),
+    });
+  };
+
   // 결제 상세 조회
-  const openDetailModal = async (payment: Payment) => {
+  const openDetailModal = async (payment: IntegratedPayment) => {
     setSelectedPayment(payment);
     setShowDetailModal(true);
     setDetailError(null);
@@ -287,7 +413,7 @@ export default function PaymentsPage() {
   };
 
   // 환불 모달 열기
-  const openRefundModal = (payment: Payment) => {
+  const openRefundModal = (payment: IntegratedPayment) => {
     setRefundPayment(payment);
     setRefundAmount(payment.amount.toString());
     setRefundReason('');
@@ -418,11 +544,53 @@ export default function PaymentsPage() {
           <h2 className="text-2xl font-bold text-slate-800">💳 결제 관리</h2>
           <p className="text-slate-500 mt-1">결제 내역을 관리하고 청구서를 발송합니다.</p>
         </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowManualPaymentModal(true)}
+            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-200"
+          >
+            + 수기 결제 등록
+          </button>
+          <button
+            onClick={() => setShowBillingModal(true)}
+            className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-violet-200"
+          >
+            + 청구서 생성
+          </button>
+        </div>
+      </div>
+
+      {/* 필터 탭 */}
+      <div className="flex gap-2 mb-6">
         <button
-          onClick={() => setShowBillingModal(true)}
-          className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-violet-200"
+          onClick={() => setFilterTab('all')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filterTab === 'all'
+              ? 'bg-violet-600 text-white'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
         >
-          + 청구서 생성
+          전체
+        </button>
+        <button
+          onClick={() => setFilterTab('card')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filterTab === 'card'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          카드
+        </button>
+        <button
+          onClick={() => setFilterTab('cash')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filterTab === 'cash'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          현금/기타
         </button>
       </div>
 
@@ -482,7 +650,7 @@ export default function PaymentsPage() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
-        ) : payments.length === 0 ? (
+        ) : filteredPayments.length === 0 ? (
           <div className="text-center py-20">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-100 rounded-full mb-4">
               <svg className="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -497,77 +665,113 @@ export default function PaymentsPage() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">주문번호</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">고객/학생</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">강좌</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제일</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">학생명</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">강좌명</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">구분</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제수단</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">금액</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">상태</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제일</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {payments.map((payment) => (
+                {filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-slate-50">
+                    {/* 결제일 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-mono text-slate-600">{payment.order_id}</p>
-                      <p className="text-xs text-slate-400">{formatDate(payment.created_at)}</p>
+                      <p className="text-sm text-slate-600">
+                        {payment.paid_at ? formatDate(payment.paid_at) : formatDate(payment.created_at)}
+                      </p>
                     </td>
+                    {/* 학생명 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <p className="text-sm font-medium text-slate-800">
-                        {payment.customer_name || payment.students?.student_name || '-'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {payment.customer_phone || payment.students?.parent_phone || '-'}
+                        {payment.type === 'PG' 
+                          ? (payment.customer_name || payment.student?.student_name || '-')
+                          : (payment.student?.student_name || '-')
+                        }
                       </p>
                     </td>
+                    {/* 강좌명 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm text-slate-600">{payment.courses?.title || '-'}</p>
+                      <p className="text-sm text-slate-600">{payment.course?.title || '-'}</p>
                     </td>
+                    {/* 구분 (수강료/교재비) */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-semibold text-slate-800">{formatPrice(payment.amount)}원</p>
-                      {payment.method && (
-                        <p className="text-xs text-slate-400">{payment.method}</p>
+                      <p className="text-sm text-slate-600">
+                        {payment.type === 'MANUAL' && payment.category
+                          ? (MANUAL_CATEGORY_LABELS[payment.category] || payment.category)
+                          : '-'
+                        }
+                      </p>
+                    </td>
+                    {/* 결제수단 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {payment.type === 'PG' ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                          {payment.method || '카드'}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                          {MANUAL_METHOD_LABELS[payment.method || ''] || payment.method || '-'}
+                        </span>
                       )}
                     </td>
+                    {/* 금액 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm font-semibold text-slate-800">{formatPrice(payment.amount)}원</p>
+                    </td>
+                    {/* 상태 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(payment.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm text-slate-600">
-                        {payment.paid_at ? formatDate(payment.paid_at) : '-'}
-                      </p>
-                    </td>
+                    {/* 관리 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        {/* 상세 보기 버튼 */}
-                        <button
-                          onClick={() => openDetailModal(payment)}
-                          className="text-xs px-2 py-1 text-violet-600 hover:bg-violet-50 rounded font-medium transition-colors"
-                        >
-                          상세
-                        </button>
-                        
-                        {/* 환불 버튼 (결제 완료 상태일 때만) */}
-                        {payment.status === 'paid' && payment.payment_key && (
-                          <button
-                            onClick={() => openRefundModal(payment)}
-                            className="text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded font-medium transition-colors"
-                          >
-                            환불
-                          </button>
-                        )}
-                        
-                        {/* 영수증 링크 */}
-                        {payment.receipt_url && (
-                          <a
-                            href={payment.receipt_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 text-slate-600 hover:bg-slate-50 rounded font-medium transition-colors"
-                          >
-                            영수증
-                          </a>
+                        {payment.type === 'PG' ? (
+                          <>
+                            {/* PG 결제: 상세 보기 버튼 */}
+                            <button
+                              onClick={() => openDetailModal(payment)}
+                              className="text-xs px-2 py-1 text-violet-600 hover:bg-violet-50 rounded font-medium transition-colors"
+                            >
+                              상세
+                            </button>
+                            
+                            {/* 환불 버튼 (결제 완료 상태일 때만) */}
+                            {payment.status === 'paid' && payment.payment_key && (
+                              <button
+                                onClick={() => openRefundModal(payment)}
+                                className="text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded font-medium transition-colors"
+                              >
+                                환불
+                              </button>
+                            )}
+                            
+                            {/* 영수증 링크 */}
+                            {payment.receipt_url && (
+                              <a
+                                href={payment.receipt_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs px-2 py-1 text-slate-600 hover:bg-slate-50 rounded font-medium transition-colors"
+                              >
+                                영수증
+                              </a>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {/* 수동 결제: 메모 표시 */}
+                            {payment.memo ? (
+                              <span className="text-xs text-slate-500 max-w-[150px] truncate" title={payment.memo}>
+                                📝 {payment.memo}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-400">-</span>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -1068,6 +1272,153 @@ export default function PaymentsPage() {
                   className="flex-1 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessingRefund ? '처리 중...' : '환불 처리'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 수동 결제 등록 모달 */}
+      {showManualPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-slate-800">💵 수기 결제 등록</h3>
+              <p className="text-slate-500 text-sm mt-1">현금, 결제선생, 계좌이체 등의 결제를 등록합니다.</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* 학생 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  학생 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={manualPayment.student_id}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, student_id: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                >
+                  <option value="">학생을 선택하세요</option>
+                  {students.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.student_name} ({student.parent_phone || '연락처 없음'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 강좌 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  강좌 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={manualPayment.course_id}
+                  onChange={(e) => {
+                    const courseId = e.target.value;
+                    const course = courses.find((c) => c.id === courseId);
+                    setManualPayment((prev) => ({
+                      ...prev,
+                      course_id: courseId,
+                      amount: course ? course.price.toString() : prev.amount,
+                    }));
+                  }}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                >
+                  <option value="">강좌를 선택하세요</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title} ({formatPrice(course.price)}원)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 금액 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  금액 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={manualPayment.amount}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, amount: e.target.value }))}
+                  placeholder="결제 금액"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              {/* 카테고리 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  카테고리 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={manualPayment.category}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                >
+                  <option value="TUITION">수강료</option>
+                  <option value="MATERIAL">교재비</option>
+                </select>
+              </div>
+
+              {/* 결제 수단 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  결제 수단 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={manualPayment.method}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, method: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                >
+                  <option value="CASH">현금</option>
+                  <option value="PAYMENT_TEACHER">결제선생</option>
+                  <option value="TRANSFER">계좌이체</option>
+                </select>
+              </div>
+
+              {/* 결제일 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  결제일 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={manualPayment.paid_at}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, paid_at: e.target.value }))}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              {/* 메모 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">메모</label>
+                <textarea
+                  value={manualPayment.memo}
+                  onChange={(e) => setManualPayment((prev) => ({ ...prev, memo: e.target.value }))}
+                  placeholder="추가 정보 (선택)"
+                  rows={2}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none resize-none"
+                />
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={closeManualPaymentModal}
+                  className="flex-1 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={createManualPayment}
+                  disabled={isCreatingManualPayment}
+                  className="flex-1 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isCreatingManualPayment ? '등록 중...' : '등록하기'}
                 </button>
               </div>
             </div>

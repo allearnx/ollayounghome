@@ -325,3 +325,56 @@ CREATE POLICY "Anyone can update payments" ON payments
 -- 'paid': 결제 완료
 -- 'cancelled': 결제 취소
 -- 'failed': 결제 실패
+
+-- ============================================
+-- 수동 결제 테이블 (manual_payments) - 현금/결제선생 등
+-- ============================================
+CREATE TABLE IF NOT EXISTS manual_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    amount INTEGER NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('TUITION', 'MATERIAL')),
+    method TEXT NOT NULL CHECK (method IN ('CASH', 'PAYMENT_TEACHER', 'TRANSFER')),
+    memo TEXT,
+    paid_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_student_id ON manual_payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_course_id ON manual_payments(course_id);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_paid_at ON manual_payments(paid_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_category ON manual_payments(category);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_method ON manual_payments(method);
+
+-- RLS 정책
+ALTER TABLE manual_payments ENABLE ROW LEVEL SECURITY;
+
+-- 인증된 사용자만 조회/추가/수정/삭제 가능 (관리자용)
+CREATE POLICY "Authenticated users can view manual_payments" ON manual_payments
+    FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can insert manual_payments" ON manual_payments
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can update manual_payments" ON manual_payments
+    FOR UPDATE
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can delete manual_payments" ON manual_payments
+    FOR DELETE
+    USING (auth.role() = 'authenticated');
+
+-- 카테고리 설명:
+-- 'TUITION': 수강료
+-- 'MATERIAL': 교재비
+
+-- 결제수단 설명:
+-- 'CASH': 현금
+-- 'PAYMENT_TEACHER': 결제선생
+-- 'TRANSFER': 계좌이체
