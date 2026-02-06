@@ -121,6 +121,14 @@ export default function PaymentsPage() {
     paid_at: new Date().toISOString().slice(0, 10),
   });
   const [isCreatingManualPayment, setIsCreatingManualPayment] = useState(false);
+  
+  // 학생 탭 상태 (기존/신규)
+  const [studentTab, setStudentTab] = useState<'existing' | 'new'>('existing');
+  const [newStudent, setNewStudent] = useState({
+    student_name: '',
+    parent_phone: '',
+    grade: '',
+  });
 
   // 결제 상세 모달
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -302,10 +310,28 @@ export default function PaymentsPage() {
 
   // 수동 결제 등록
   const createManualPayment = async () => {
-    if (!manualPayment.student_id) {
-      alert('학생을 선택해주세요.');
-      return;
+    // 유효성 검사: 신규 학생인 경우
+    if (studentTab === 'new') {
+      if (!newStudent.student_name.trim()) {
+        alert('학생 이름을 입력해주세요.');
+        return;
+      }
+      if (!newStudent.parent_phone.trim()) {
+        alert('학부모 연락처를 입력해주세요.');
+        return;
+      }
+      if (!newStudent.grade) {
+        alert('학년을 선택해주세요.');
+        return;
+      }
+    } else {
+      // 기존 학생인 경우
+      if (!manualPayment.student_id) {
+        alert('학생을 선택해주세요.');
+        return;
+      }
     }
+
     if (!manualPayment.course_id) {
       alert('강좌를 선택해주세요.');
       return;
@@ -326,6 +352,33 @@ export default function PaymentsPage() {
         throw new Error('인증이 필요합니다.');
       }
 
+      let studentId = manualPayment.student_id;
+
+      // 신규 학생인 경우: 먼저 학생 생성
+      if (studentTab === 'new') {
+        const studentRes = await fetch('/api/students', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            student_name: newStudent.student_name.trim(),
+            parent_phone: newStudent.parent_phone.trim(),
+            grade: newStudent.grade,
+          }),
+        });
+
+        const studentData = await studentRes.json();
+
+        if (!studentRes.ok) {
+          throw new Error(studentData.error || '학생 등록에 실패했습니다.');
+        }
+
+        studentId = studentData.id;
+      }
+
+      // 수기 결제 생성
       const response = await fetch('/api/manual-payments', {
         method: 'POST',
         headers: {
@@ -333,7 +386,7 @@ export default function PaymentsPage() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          student_id: manualPayment.student_id,
+          student_id: studentId,
           course_id: manualPayment.course_id,
           amount: parseInt(manualPayment.amount),
           category: manualPayment.category,
@@ -349,7 +402,7 @@ export default function PaymentsPage() {
         throw new Error(data.error || '수기 결제 등록에 실패했습니다.');
       }
 
-      alert('수기 결제가 등록되었습니다.');
+      alert(studentTab === 'new' ? '학생 등록 및 수기 결제가 완료되었습니다.' : '수기 결제가 등록되었습니다.');
       closeManualPaymentModal();
       fetchData();
     } catch (error) {
@@ -371,6 +424,13 @@ export default function PaymentsPage() {
       method: 'CASH',
       memo: '',
       paid_at: new Date().toISOString().slice(0, 10),
+    });
+    // 신규 학생 상태 초기화
+    setStudentTab('existing');
+    setNewStudent({
+      student_name: '',
+      parent_phone: '',
+      grade: '',
     });
   };
 
@@ -1289,24 +1349,116 @@ export default function PaymentsPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              {/* 학생 선택 */}
+              {/* 학생 탭 */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  학생 <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={manualPayment.student_id}
-                  onChange={(e) => setManualPayment((prev) => ({ ...prev, student_id: e.target.value }))}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
-                >
-                  <option value="">학생을 선택하세요</option>
-                  {students.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.student_name} ({student.parent_phone || '연락처 없음'})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex border-b border-slate-200 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setStudentTab('existing')}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                      studentTab === 'existing'
+                        ? 'text-emerald-600 border-b-2 border-emerald-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    기존 학생
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudentTab('new')}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                      studentTab === 'new'
+                        ? 'text-emerald-600 border-b-2 border-emerald-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    신규 학생 등록
+                  </button>
+                </div>
+
+                {/* 기존 학생 선택 */}
+                {studentTab === 'existing' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      학생 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={manualPayment.student_id}
+                      onChange={(e) => setManualPayment((prev) => ({ ...prev, student_id: e.target.value }))}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                    >
+                      <option value="">학생을 선택하세요</option>
+                      {students.map((student) => (
+                        <option key={student.id} value={student.id}>
+                          {student.student_name} ({student.parent_phone || '연락처 없음'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* 신규 학생 등록 폼 */}
+                {studentTab === 'new' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        학생 이름 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newStudent.student_name}
+                        onChange={(e) => setNewStudent((prev) => ({ ...prev, student_name: e.target.value }))}
+                        placeholder="학생 이름"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        학부모 연락처 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={newStudent.parent_phone}
+                        onChange={(e) => setNewStudent((prev) => ({ ...prev, parent_phone: e.target.value }))}
+                        placeholder="010-0000-0000"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        학년 <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={newStudent.grade}
+                        onChange={(e) => setNewStudent((prev) => ({ ...prev, grade: e.target.value }))}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none"
+                      >
+                        <option value="">학년을 선택하세요</option>
+                        <optgroup label="초등학교">
+                          <option value="초등 1학년">초등 1학년</option>
+                          <option value="초등 2학년">초등 2학년</option>
+                          <option value="초등 3학년">초등 3학년</option>
+                          <option value="초등 4학년">초등 4학년</option>
+                          <option value="초등 5학년">초등 5학년</option>
+                          <option value="초등 6학년">초등 6학년</option>
+                        </optgroup>
+                        <optgroup label="중학교">
+                          <option value="중등 1학년">중등 1학년</option>
+                          <option value="중등 2학년">중등 2학년</option>
+                          <option value="중등 3학년">중등 3학년</option>
+                        </optgroup>
+                        <optgroup label="고등학교">
+                          <option value="고등 1학년">고등 1학년</option>
+                          <option value="고등 2학년">고등 2학년</option>
+                          <option value="고등 3학년">고등 3학년</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              <hr className="border-slate-200" />
 
               {/* 강좌 선택 */}
               <div>
