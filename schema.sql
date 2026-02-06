@@ -388,3 +388,10 @@ ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH T
 -- 삭제 필터링 성능을 위한 인덱스
 CREATE INDEX IF NOT EXISTS idx_payments_deleted_at ON payments(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_manual_payments_deleted_at ON manual_payments(deleted_at);
+
+-- ============================================
+-- 수기 결제에 학생 정보 직접 저장 (상담신청과 분리)
+-- ============================================
+ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS student_name TEXT;
+ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS parent_phone TEXT;
+ALTER TABLE manual_payments ALTER COLUMN student_id DROP NOT NULL;

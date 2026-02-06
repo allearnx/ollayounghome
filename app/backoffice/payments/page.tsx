@@ -325,10 +325,6 @@ export default function PaymentsPage() {
         alert('학부모 연락처를 입력해주세요.');
         return;
       }
-      if (!newStudent.grade) {
-        alert('학년을 선택해주세요.');
-        return;
-      }
     } else {
       // 기존 학생인 경우
       if (!manualPayment.student_id) {
@@ -357,33 +353,7 @@ export default function PaymentsPage() {
         throw new Error('인증이 필요합니다.');
       }
 
-      let studentId = manualPayment.student_id;
-
-      // 신규 학생인 경우: 먼저 학생 생성
-      if (studentTab === 'new') {
-        const studentRes = await fetch('/api/students', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            student_name: newStudent.student_name.trim(),
-            parent_phone: newStudent.parent_phone.trim(),
-            grade: newStudent.grade,
-          }),
-        });
-
-        const studentData = await studentRes.json();
-
-        if (!studentRes.ok) {
-          throw new Error(studentData.error || '학생 등록에 실패했습니다.');
-        }
-
-        studentId = studentData.id;
-      }
-
-      // 수기 결제 생성
+      // 수기 결제 생성 (신규 학생은 student_name, parent_phone 직접 전달)
       const response = await fetch('/api/manual-payments', {
         method: 'POST',
         headers: {
@@ -391,7 +361,13 @@ export default function PaymentsPage() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          student_id: studentId,
+          // 기존 학생 선택 시 student_id, 신규 학생은 student_name/parent_phone 직접 전달
+          ...(studentTab === 'existing'
+            ? { student_id: manualPayment.student_id }
+            : {
+                student_name: newStudent.student_name.trim(),
+                parent_phone: newStudent.parent_phone.trim(),
+              }),
           course_id: manualPayment.course_id,
           amount: parseInt(manualPayment.amount),
           category: manualPayment.category,
@@ -407,7 +383,7 @@ export default function PaymentsPage() {
         throw new Error(data.error || '수기 결제 등록에 실패했습니다.');
       }
 
-      alert(studentTab === 'new' ? '학생 등록 및 수기 결제가 완료되었습니다.' : '수기 결제가 등록되었습니다.');
+      alert('수기 결제가 등록되었습니다.');
       closeManualPaymentModal();
       fetchData();
     } catch (error) {

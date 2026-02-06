@@ -70,7 +70,9 @@ export async function GET(request: NextRequest) {
           method,
           memo,
           paid_at,
-          students (id, student_name, parent_phone),
+          student_id,
+          student_name,
+          parent_phone,
           courses (id, title, price)
         `)
         .is('deleted_at', null)
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
       customer_phone: p.customer_phone,
     }));
 
-    // 수동 결제 데이터 변환
+    // 수동 결제 데이터 변환 (자체 student_name, parent_phone 컬럼 사용)
     const manualPayments: IntegratedPayment[] = (manualResult.data || []).map((p) => ({
       id: p.id,
       type: 'MANUAL' as const,
@@ -122,7 +124,9 @@ export async function GET(request: NextRequest) {
       method: p.method,
       paid_at: p.paid_at,
       created_at: p.created_at,
-      student: extractSingleRelation(p.students) as IntegratedPayment['student'],
+      student: p.student_name
+        ? { id: p.student_id || '', student_name: p.student_name, parent_phone: p.parent_phone || '' }
+        : null,
       course: extractSingleRelation(p.courses) as IntegratedPayment['course'],
       category: p.category,
       memo: p.memo,

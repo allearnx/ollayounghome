@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       student_id,
+      student_name,
+      parent_phone,
       course_id,
       amount,
       category,
@@ -21,7 +23,9 @@ export async function POST(request: NextRequest) {
       memo,
       paid_at,
     } = body as {
-      student_id: string;
+      student_id?: string;
+      student_name?: string;
+      parent_phone?: string;
       course_id: string;
       amount: number;
       category: string;
@@ -30,9 +34,9 @@ export async function POST(request: NextRequest) {
       paid_at?: string;
     };
 
-    // 필수 필드 검증
-    if (!student_id) {
-      return NextResponse.json({ error: '학생을 선택해주세요.' }, { status: 400 });
+    // 학생 정보 검증: student_id 또는 (student_name + parent_phone) 필수
+    if (!student_id && (!student_name || !parent_phone)) {
+      return NextResponse.json({ error: '학생 정보를 입력해주세요.' }, { status: 400 });
     }
     if (!course_id) {
       return NextResponse.json({ error: '강좌를 선택해주세요.' }, { status: 400 });
@@ -47,24 +51,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '유효한 결제수단을 선택해주세요.' }, { status: 400 });
     }
 
-    // 학생/강좌 존재 여부 병렬 확인
-    const [studentResult, courseResult] = await Promise.all([
-      supabase.from('students').select('id').eq('id', student_id).single(),
+    // 강좌 존재 여부 확인 (학생은 student_id가 있을 때만 검증)
+    const validationPromises: Promise<unknown>[] = [
       supabase.from('courses').select('id').eq('id', course_id).single(),
-    ]);
-
-    if (studentResult.error || !studentResult.data) {
-      return NextResponse.json({ error: '존재하지 않는 학생입니다.' }, { status: 404 });
+    ];
+    
+    let resolvedStudentName = student_name?.trim();
+    let resolvedParentPhone = parent_phone?.trim();
+    
+    if (student_id) {
+      validationPromises.push(
+        supabase.from('students').select('id, student_name, parent_phone').eq('id', student_id).single()
+      );
     }
+
+    const results = await Promise.all(validationPromises);
+    const courseResult = results[0] as { error: unknown; data: unknown };
+    
     if (courseResult.error || !courseResult.data) {
       return NextResponse.json({ error: '존재하지 않는 강좌입니다.' }, { status: 404 });
     }
 
-    // 수동 결제 생성
+    // 기존 학생 선택 시: students 테이블에서 이름/연락처 가져오기
+    if (student_id && results[1]) {
+      const studentResult = results[1] as { error: unknown; data: { id: string; student_name: string; parent_phone: string } | null };
+      if (studentResult.error || !studentResult.data) {
+        return NextResponse.json({ error: '존재하지 않는 학생입니다.' }, { status: 404 });
+      }
+      // 기존 학생의 정보로 채우기
+      resolvedStudentName = studentResult.data.student_name;
+      resolvedParentPhone = studentResult.data.parent_phone;
+    }
+
+    // 수동 결제 생성 (student_name, parent_phone 직접 저장)
     const { data, error } = await supabase
       .from('manual_payments')
       .insert({
-        student_id,
+        student_id: student_id || null,
+        student_name: resolvedStudentName,
+        parent_phone: resolvedParentPhone,
         course_id,
         amount,
         category,
@@ -74,7 +99,6 @@ export async function POST(request: NextRequest) {
       })
       .select(`
         *,
-        students (id, student_name, parent_phone),
         courses (id, title, price)
       `)
       .single();
@@ -110,7 +134,6 @@ export async function GET(request: NextRequest) {
       .from('manual_payments')
       .select(`
         *,
-        students (id, student_name, parent_phone),
         courses (id, title, price)
       `)
       .is('deleted_at', null)
