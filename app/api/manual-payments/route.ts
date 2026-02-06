@@ -51,34 +51,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '유효한 결제수단을 선택해주세요.' }, { status: 400 });
     }
 
-    // 강좌 존재 여부 확인 (학생은 student_id가 있을 때만 검증)
-    const validationPromises: Promise<unknown>[] = [
-      supabase.from('courses').select('id').eq('id', course_id).single(),
-    ];
-    
     let resolvedStudentName = student_name?.trim();
     let resolvedParentPhone = parent_phone?.trim();
-    
-    if (student_id) {
-      validationPromises.push(
-        supabase.from('students').select('id, student_name, parent_phone').eq('id', student_id).single()
-      );
-    }
 
-    const results = await Promise.all(validationPromises);
-    const courseResult = results[0] as { error: unknown; data: unknown };
-    
+    // 강좌 존재 여부 확인
+    const courseResult = await supabase.from('courses').select('id').eq('id', course_id).single();
     if (courseResult.error || !courseResult.data) {
       return NextResponse.json({ error: '존재하지 않는 강좌입니다.' }, { status: 404 });
     }
 
     // 기존 학생 선택 시: students 테이블에서 이름/연락처 가져오기
-    if (student_id && results[1]) {
-      const studentResult = results[1] as { error: unknown; data: { id: string; student_name: string; parent_phone: string } | null };
+    if (student_id) {
+      const studentResult = await supabase
+        .from('students')
+        .select('id, student_name, parent_phone')
+        .eq('id', student_id)
+        .single();
+      
       if (studentResult.error || !studentResult.data) {
         return NextResponse.json({ error: '존재하지 않는 학생입니다.' }, { status: 404 });
       }
-      // 기존 학생의 정보로 채우기
       resolvedStudentName = studentResult.data.student_name;
       resolvedParentPhone = studentResult.data.parent_phone;
     }
