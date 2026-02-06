@@ -196,6 +196,7 @@ export async function GET(request: NextRequest) {
         students (id, student_name, parent_phone)
       `)
       .eq('order_id', orderId)
+      .is('deleted_at', null)
       .single();
 
     if (error || !data) {

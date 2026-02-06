@@ -378,3 +378,13 @@ CREATE POLICY "Authenticated users can delete manual_payments" ON manual_payment
 -- 'CASH': 현금
 -- 'PAYMENT_TEACHER': 결제선생
 -- 'TRANSFER': 계좌이체
+
+-- ============================================
+-- 소프트 삭제를 위한 deleted_at 컬럼 추가
+-- ============================================
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+
+-- 삭제 필터링 성능을 위한 인덱스
+CREATE INDEX IF NOT EXISTS idx_payments_deleted_at ON payments(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_manual_payments_deleted_at ON manual_payments(deleted_at);

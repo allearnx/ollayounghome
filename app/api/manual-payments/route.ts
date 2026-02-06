@@ -113,6 +113,7 @@ export async function GET(request: NextRequest) {
         students (id, student_name, parent_phone),
         courses (id, title, price)
       `)
+      .is('deleted_at', null)
       .order('paid_at', { ascending: false })
       .limit(limit);
 

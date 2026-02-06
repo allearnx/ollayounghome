@@ -90,20 +90,35 @@ export async function GET(request: NextRequest) {
       return fresh;
     };
 
-    // Paid (gross)
-    const { data: paidRows, error: paidErr } = await supabase
-      .from('payments')
-      .select('amount, paid_at, course_id, courses(category)')
-      .eq('status', 'paid')
-      .gte('paid_at', rangeStart)
-      .lt('paid_at', rangeEnd);
+    // PG 결제(paid)와 수동 결제를 병렬로 조회 (삭제되지 않은 것만)
+    const [paidResult, manualResult] = await Promise.all([
+      supabase
+        .from('payments')
+        .select('amount, paid_at, course_id, courses(category)')
+        .eq('status', 'paid')
+        .is('deleted_at', null)
+        .gte('paid_at', rangeStart)
+        .lt('paid_at', rangeEnd),
+      supabase
+        .from('manual_payments')
+        .select('amount, paid_at, category, course_id, courses(category)')
+        .is('deleted_at', null)
+        .gte('paid_at', rangeStart)
+        .lt('paid_at', rangeEnd),
+    ]);
 
-    if (paidErr) {
-      console.error('Admin reports paidErr:', paidErr);
+    if (paidResult.error) {
+      console.error('Admin reports paidErr:', paidResult.error);
       return NextResponse.json({ error: '매출 데이터를 불러올 수 없습니다.' }, { status: 500 });
     }
 
-    (paidRows ?? []).forEach((r: any) => {
+    if (manualResult.error) {
+      console.error('Admin reports manualErr:', manualResult.error);
+      return NextResponse.json({ error: '수동 결제 데이터를 불러올 수 없습니다.' }, { status: 500 });
+    }
+
+    // PG 결제 매출 집계
+    (paidResult.data ?? []).forEach((r: any) => {
       const mk = monthKeyFromKst(r?.paid_at);
       if (!mk || !monthMap.has(mk)) return;
       const amount = Number(r?.amount ?? 0) || 0;
@@ -117,22 +132,41 @@ export async function GET(request: NextRequest) {
       cb.paidCount += 1;
     });
 
-    // Cancelled (refunds). Prefer cancelled_at + cancelled_amount.
+    // 수동 결제 매출 집계 (항상 paid 상태, 환불 없음)
+    (manualResult.data ?? []).forEach((r: any) => {
+      const mk = monthKeyFromKst(r?.paid_at);
+      if (!mk || !monthMap.has(mk)) return;
+      const amount = Number(r?.amount ?? 0) || 0;
+      const bucket = monthMap.get(mk)!;
+      bucket.gross += amount;
+      bucket.paidCount += 1;
+
+      // 수동 결제의 카테고리: manual_payments.category (TUITION/MATERIAL)를 사용하거나,
+      // 연결된 course의 category를 사용
+      const category = r?.courses?.category ?? r?.category ?? 'unknown';
+      const cb = ensureCat(String(category));
+      cb.gross += amount;
+      cb.paidCount += 1;
+    });
+
+    // Cancelled (refunds). Prefer cancelled_at + cancelled_amount. (삭제되지 않은 것만)
     const { data: cancelledRows, error: cancelledErr } = await supabase
       .from('payments')
       .select('cancelled_at, cancelled_amount, amount, updated_at, course_id, courses(category)')
       .eq('status', 'cancelled')
+      .is('deleted_at', null)
       .gte('cancelled_at', rangeStart)
       .lt('cancelled_at', rangeEnd);
 
     if (cancelledErr) {
       const msg = String((cancelledErr as any)?.message ?? '');
-      // If schema isn't migrated yet, fallback to updated_at + amount.
+      // If schema isn't migrated yet, fallback to updated_at + amount. (삭제되지 않은 것만)
       if (/column .*cancelled_/i.test(msg)) {
         const { data: legacyRows, error: legacyErr } = await supabase
           .from('payments')
           .select('amount, updated_at, course_id, courses(category)')
           .eq('status', 'cancelled')
+          .is('deleted_at', null)
           .gte('updated_at', rangeStart)
           .lt('updated_at', rangeEnd);
         if (legacyErr) {

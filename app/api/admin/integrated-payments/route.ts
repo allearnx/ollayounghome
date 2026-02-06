@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       500
     );
 
-    // PG 결제와 수동 결제를 병렬로 조회
+    // PG 결제와 수동 결제를 병렬로 조회 (삭제되지 않은 것만)
     const [pgResult, manualResult] = await Promise.all([
       supabase
         .from('payments')
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
           students (id, student_name, parent_phone),
           courses (id, title, price)
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(limit),
       supabase
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
           students (id, student_name, parent_phone),
           courses (id, title, price)
         `)
+        .is('deleted_at', null)
         .order('paid_at', { ascending: false })
         .limit(limit),
     ]);

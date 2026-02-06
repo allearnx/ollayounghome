@@ -145,6 +145,11 @@ export default function PaymentsPage() {
   const [isPartialRefund, setIsPartialRefund] = useState(false);
   const [isProcessingRefund, setIsProcessingRefund] = useState(false);
 
+  // 삭제 모달
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePayment, setDeletePayment] = useState<IntegratedPayment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // 필터링된 결제 목록
   const filteredPayments = payments.filter((p) => {
     if (filterTab === 'all') return true;
@@ -547,6 +552,60 @@ export default function PaymentsPage() {
     }
   };
 
+  // 삭제 모달 열기
+  const openDeleteModal = (payment: IntegratedPayment) => {
+    setDeletePayment(payment);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeletePayment(null);
+  };
+
+  // 삭제 처리
+  const processDelete = async () => {
+    if (!deletePayment) return;
+
+    setIsDeleting(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('관리자 인증이 필요합니다.');
+      }
+
+      // PG 결제 vs 수동 결제 구분하여 다른 API 호출
+      const endpoint = deletePayment.type === 'PG'
+        ? `/api/payments/${deletePayment.id}`
+        : `/api/manual-payments/${deletePayment.id}`;
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '삭제에 실패했습니다.');
+      }
+
+      alert('결제 내역이 삭제되었습니다.');
+      closeDeleteModal();
+      fetchData();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(error instanceof Error ? error.message : '삭제에 실패했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // 상태 뱃지
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -820,17 +879,30 @@ export default function PaymentsPage() {
                                 영수증
                               </a>
                             )}
+
+                            {/* PG 결제 삭제 버튼 */}
+                            <button
+                              onClick={() => openDeleteModal(payment)}
+                              className="text-xs px-2 py-1 text-slate-500 hover:bg-slate-100 rounded font-medium transition-colors"
+                            >
+                              삭제
+                            </button>
                           </>
                         ) : (
                           <>
                             {/* 수동 결제: 메모 표시 */}
-                            {payment.memo ? (
-                              <span className="text-xs text-slate-500 max-w-[150px] truncate" title={payment.memo}>
+                            {payment.memo && (
+                              <span className="text-xs text-slate-500 max-w-[100px] truncate" title={payment.memo}>
                                 📝 {payment.memo}
                               </span>
-                            ) : (
-                              <span className="text-xs text-slate-400">-</span>
                             )}
+                            {/* 수동 결제 삭제 버튼 */}
+                            <button
+                              onClick={() => openDeleteModal(payment)}
+                              className="text-xs px-2 py-1 text-slate-500 hover:bg-slate-100 rounded font-medium transition-colors"
+                            >
+                              삭제
+                            </button>
                           </>
                         )}
                       </div>
@@ -1571,6 +1643,76 @@ export default function PaymentsPage() {
                   className="flex-1 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {isCreatingManualPayment ? '등록 중...' : '등록하기'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && deletePayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closeDeleteModal}
+          />
+          
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-slate-800">결제 내역 삭제</h3>
+              <p className="text-sm text-slate-500 mt-1">삭제된 내역은 매출 리포트에서 제외됩니다.</p>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* 결제 정보 */}
+              <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">학생명</span>
+                  <span className="text-slate-800 font-medium">
+                    {deletePayment.type === 'PG' 
+                      ? (deletePayment.customer_name || deletePayment.student?.student_name || '-')
+                      : (deletePayment.student?.student_name || '-')
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">강좌명</span>
+                  <span className="text-slate-800">{deletePayment.course?.title || '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">결제금액</span>
+                  <span className="text-slate-800 font-bold">{formatPrice(deletePayment.amount)}원</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">결제유형</span>
+                  <span className="text-slate-800">
+                    {deletePayment.type === 'PG' ? '카드(PG)' : '수기결제'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 주의사항 */}
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <p className="text-sm text-amber-700">
+                  ⚠️ 삭제된 결제 내역은 매출 리포트에서 제외됩니다. 실제 환불이 필요한 경우 환불 기능을 사용하세요.
+                </p>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={closeDeleteModal}
+                  className="flex-1 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={processDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
                 </button>
               </div>
             </div>

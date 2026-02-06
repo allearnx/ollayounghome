@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
             courses (id, title, price)
           `
           )
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(limit),
         supabase
