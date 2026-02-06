@@ -118,7 +118,7 @@ export default function PaymentsPage() {
     category: 'TUITION',
     method: 'CASH',
     memo: '',
-    paid_at: new Date().toISOString().slice(0, 10),
+    paid_at: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
   });
   const [isCreatingManualPayment, setIsCreatingManualPayment] = useState(false);
   
@@ -397,7 +397,7 @@ export default function PaymentsPage() {
           category: manualPayment.category,
           method: manualPayment.method,
           memo: manualPayment.memo || null,
-          paid_at: manualPayment.paid_at ? new Date(manualPayment.paid_at).toISOString() : null,
+          paid_at: manualPayment.paid_at ? new Date(`${manualPayment.paid_at}T00:00:00+09:00`).toISOString() : null,
         }),
       });
 
@@ -428,7 +428,7 @@ export default function PaymentsPage() {
       category: 'TUITION',
       method: 'CASH',
       memo: '',
-      paid_at: new Date().toISOString().slice(0, 10),
+      paid_at: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
     });
     // 신규 학생 상태 초기화
     setStudentTab('existing');
