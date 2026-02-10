@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         .lt('paid_at', rangeEnd),
       supabase
         .from('teacher_expenses')
-        .select('expense_date, net_amount')
+        .select('expense_date, net_amount, insurance_amount')
         .gte('expense_date', rangeStartDate || '')
         .lt('expense_date', rangeEndDate || ''),
     ]);
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
     (expenseResult.data ?? []).forEach((r: any) => {
       const mk = monthKeyFromKst(r?.expense_date);
       if (!mk || !monthMap.has(mk)) return;
-      const amount = Number(r?.net_amount ?? 0) || 0;
+      const amount = (Number(r?.net_amount ?? 0) || 0) + (Number(r?.insurance_amount ?? 0) || 0);
       const bucket = monthMap.get(mk)!;
       bucket.expenses += amount;
     });

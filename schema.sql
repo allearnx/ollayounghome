@@ -424,6 +424,9 @@ ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS student_count INTEGER;
 ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS percent_rate NUMERIC(5, 4);
 ALTER TABLE teacher_expenses ALTER COLUMN class_hours DROP NOT NULL;
 ALTER TABLE teacher_expenses ALTER COLUMN hourly_rate DROP NOT NULL;
+-- 4대보험 처리
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS insurance_applicable BOOLEAN DEFAULT false;
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS insurance_amount INTEGER DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_teacher_expenses_date ON teacher_expenses(expense_date DESC);
 CREATE INDEX IF NOT EXISTS idx_teacher_expenses_teacher ON teacher_expenses(teacher_name);

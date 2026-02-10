@@ -37,6 +37,8 @@ export default function ReportsPage() {
     tuition_per_student: number | null;
     student_count: number | null;
     percent_rate: number | null;
+    insurance_applicable: boolean | null;
+    insurance_amount: number | null;
     gross_amount: number;
     tax_amount: number;
     net_amount: number;
@@ -50,6 +52,8 @@ export default function ReportsPage() {
     tuition_per_student: '',
     student_count: '',
     percent_rate: '',
+    insurance_applicable: false,
+    insurance_amount: '0',
   });
   const [hourCalc, setHourCalc] = useState({
     sessions_per_week: '',
@@ -76,8 +80,9 @@ export default function ReportsPage() {
         ? Math.round(tuition * students * percent)
         : Math.round(hours * rate);
     const tax = Math.round(gross * 0.033);
-    const net = gross - tax;
-    return { gross, tax, net };
+    const insurance = form.insurance_applicable ? parseNumber(form.insurance_amount) : 0;
+    const net = gross - tax - insurance;
+    return { gross, tax, insurance, net };
   };
 
   const computedMinutes =
@@ -167,6 +172,7 @@ export default function ReportsPage() {
     const tuition = parseNumber(expenseForm.tuition_per_student);
     const students = parseNumber(expenseForm.student_count);
     const percent = parseNumber(expenseForm.percent_rate);
+    const insuranceAmount = parseNumber(expenseForm.insurance_amount);
 
     if (expenseForm.pay_type === 'HOURLY') {
       if (!hours || hours <= 0) {
@@ -208,6 +214,8 @@ export default function ReportsPage() {
         tuition_per_student: expenseForm.pay_type === 'PERCENT' ? tuition : null,
         student_count: expenseForm.pay_type === 'PERCENT' ? students : null,
         percent_rate: expenseForm.pay_type === 'PERCENT' ? percent / 100 : null,
+        insurance_applicable: expenseForm.insurance_applicable,
+        insurance_amount: expenseForm.insurance_applicable ? insuranceAmount : 0,
       };
 
       const url = editingExpenseId
@@ -234,6 +242,8 @@ export default function ReportsPage() {
         tuition_per_student: '',
         student_count: '',
         percent_rate: '',
+        insurance_applicable: false,
+        insurance_amount: '0',
       });
       setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
       setIsManualHours(false);
@@ -259,6 +269,8 @@ export default function ReportsPage() {
       tuition_per_student: expense.tuition_per_student ? String(expense.tuition_per_student) : '',
       student_count: expense.student_count ? String(expense.student_count) : '',
       percent_rate: expense.percent_rate ? String(Math.round(expense.percent_rate * 10000) / 100) : '',
+      insurance_applicable: Boolean(expense.insurance_applicable),
+      insurance_amount: String(expense.insurance_amount ?? 0),
     });
     setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
   };
@@ -274,6 +286,8 @@ export default function ReportsPage() {
       tuition_per_student: '',
       student_count: '',
       percent_rate: '',
+      insurance_applicable: false,
+      insurance_amount: '0',
     });
     setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
     setIsManualHours(false);
@@ -605,11 +619,36 @@ export default function ReportsPage() {
                 </div>
               </>
             )}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">4대보험</label>
+              <div className="flex items-center gap-3">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={expenseForm.insurance_applicable}
+                    onChange={(e) =>
+                      setExpenseForm((prev) => ({ ...prev, insurance_applicable: e.target.checked }))
+                    }
+                    className="h-4 w-4 text-violet-500 border-gray-300 rounded"
+                  />
+                  대상
+                </label>
+                <input
+                  type="number"
+                  value={expenseForm.insurance_amount}
+                  onChange={(e) => setExpenseForm((prev) => ({ ...prev, insurance_amount: e.target.value }))}
+                  disabled={!expenseForm.insurance_applicable}
+                  className="w-full max-w-[200px] px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400 disabled:bg-slate-100"
+                />
+                <span className="text-xs text-slate-500">기본 0원</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm text-slate-700">
             <div>총액: <strong>{formatKRW(formAmounts.gross || 0)}</strong></div>
             <div>세금 3.3%: <strong>{formatKRW(formAmounts.tax || 0)}</strong></div>
+            <div>4대보험: <strong>{formatKRW(formAmounts.insurance || 0)}</strong></div>
             <div>실 지급금: <strong>{formatKRW(formAmounts.net || 0)}</strong></div>
           </div>
 
@@ -645,6 +684,7 @@ export default function ReportsPage() {
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">기준</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">총액</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">세금</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">4대보험</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">실지급</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">관리</th>
                   </tr>
@@ -664,6 +704,7 @@ export default function ReportsPage() {
                       </td>
                       <td className="px-5 py-3 text-right">{formatKRW(expense.gross_amount)}</td>
                       <td className="px-5 py-3 text-right text-red-600">{formatKRW(expense.tax_amount)}</td>
+                      <td className="px-5 py-3 text-right text-slate-700">{formatKRW(expense.insurance_amount || 0)}</td>
                       <td className="px-5 py-3 text-right font-semibold">{formatKRW(expense.net_amount)}</td>
                       <td className="px-5 py-3 text-right">
                         <div className="flex justify-end gap-2">

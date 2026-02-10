@@ -39,6 +39,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       tuition_per_student,
       student_count,
       percent_rate,
+      insurance_applicable,
+      insurance_amount,
     } = body as {
       expense_date?: string;
       teacher_name?: string;
@@ -48,6 +50,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       tuition_per_student?: number;
       student_count?: number;
       percent_rate?: number;
+      insurance_applicable?: boolean;
+      insurance_amount?: number;
     };
 
     const updateData: Record<string, unknown> = {};
@@ -64,6 +68,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (typeof tuition_per_student === 'number' && tuition_per_student > 0) updateData.tuition_per_student = tuition_per_student;
     if (typeof student_count === 'number' && student_count > 0) updateData.student_count = student_count;
     if (typeof percent_rate === 'number' && percent_rate > 0) updateData.percent_rate = percent_rate;
+    if (typeof insurance_applicable === 'boolean') updateData.insurance_applicable = insurance_applicable;
+    if (typeof insurance_amount === 'number' && insurance_amount >= 0) updateData.insurance_amount = Math.round(insurance_amount);
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: '업데이트할 필드가 없습니다.' }, { status: 400 });
@@ -87,7 +93,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const existing = await supabase
       .from('teacher_expenses')
-      .select('pay_type, class_hours, hourly_rate, tuition_per_student, student_count, percent_rate')
+      .select('pay_type, class_hours, hourly_rate, tuition_per_student, student_count, percent_rate, insurance_applicable, insurance_amount')
       .eq('id', id)
       .single();
 
@@ -120,10 +126,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       updateData.hourly_rate = null;
     }
 
+    const nextInsuranceApplicable =
+      (updateData.insurance_applicable as boolean | undefined) ?? existing.data.insurance_applicable ?? false;
+    const nextInsuranceAmount =
+      (updateData.insurance_amount as number | undefined) ?? existing.data.insurance_amount ?? 0;
+    const insuranceAmount = nextInsuranceApplicable ? Math.max(0, Math.round(nextInsuranceAmount)) : 0;
+
     updateData.tax_rate = TAX_RATE;
     updateData.gross_amount = amounts.grossAmount;
     updateData.tax_amount = amounts.taxAmount;
-    updateData.net_amount = amounts.netAmount;
+    updateData.insurance_applicable = nextInsuranceApplicable;
+    updateData.insurance_amount = insuranceAmount;
+    updateData.net_amount = amounts.netAmount - insuranceAmount;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase

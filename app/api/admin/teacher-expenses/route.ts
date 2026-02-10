@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
       tuition_per_student,
       student_count,
       percent_rate,
+      insurance_applicable,
+      insurance_amount,
     } = body as {
       expense_date: string;
       teacher_name: string;
@@ -89,6 +91,8 @@ export async function POST(request: NextRequest) {
       tuition_per_student?: number;
       student_count?: number;
       percent_rate?: number;
+      insurance_applicable?: boolean;
+      insurance_amount?: number;
     };
 
     if (!expense_date) {
@@ -121,6 +125,10 @@ export async function POST(request: NextRequest) {
       amounts = computePercentAmounts(tuition_per_student, student_count, percent_rate);
     }
 
+    const insuranceApplicable = Boolean(insurance_applicable);
+    const insuranceAmount = insuranceApplicable ? Math.max(0, Math.round(insurance_amount ?? 0)) : 0;
+    const netAfterInsurance = amounts.netAmount - insuranceAmount;
+
     const { data, error } = await supabase
       .from('teacher_expenses')
       .insert({
@@ -132,10 +140,12 @@ export async function POST(request: NextRequest) {
         tuition_per_student: payType === 'PERCENT' ? tuition_per_student : null,
         student_count: payType === 'PERCENT' ? student_count : null,
         percent_rate: payType === 'PERCENT' ? percent_rate : null,
+        insurance_applicable: insuranceApplicable,
+        insurance_amount: insuranceAmount,
         tax_rate: TAX_RATE,
         gross_amount: amounts.grossAmount,
         tax_amount: amounts.taxAmount,
-        net_amount: amounts.netAmount,
+        net_amount: netAfterInsurance,
       })
       .select('*')
       .single();
