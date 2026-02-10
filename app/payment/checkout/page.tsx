@@ -194,7 +194,7 @@ function CheckoutContent() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  학부모 연락처 <span className="text-red-500">*</span>
+                  학부모 연락처 <span className="text-red-500">*</span> (필수)
                 </label>
                 <input
                   type="tel"

@@ -298,12 +298,11 @@ export default function AdminPage() {
                           );
                         }}
                         onBlur={(e) => {
-                          if (e.target.value !== student.memo) {
-                            updateStudent(student.id, 'memo', e.target.value);
-                          }
+                          updateStudent(student.id, 'memo', e.target.value);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
+                            updateStudent(student.id, 'memo', e.currentTarget.value);
                             e.currentTarget.blur();
                           }
                         }}
