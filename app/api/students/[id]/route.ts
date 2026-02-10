@@ -94,6 +94,32 @@ export async function GET(
   }
 }
 
+// DELETE: 특정 학생 삭제
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await requireAdmin(request);
+    const supabase = getSupabaseAdmin();
+    const { id } = params;
+
+    const { error } = await supabase.from('students').delete().eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    console.error('Error deleting student:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 
 
 

@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS students (
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS grade TEXT DEFAULT '';
 -- 상담 신청 여부 플래그 (결제관리에서 등록된 학생은 숨김)
 ALTER TABLE students ADD COLUMN IF NOT EXISTS is_consultation BOOLEAN DEFAULT true;
+-- 관심 있는 수업 (다중 선택)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS interest_course_ids UUID[] DEFAULT '{}';
 
 -- 인덱스 생성 (조회 성능 향상)
 CREATE INDEX IF NOT EXISTS idx_students_created_at ON students(created_at DESC);

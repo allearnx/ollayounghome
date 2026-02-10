@@ -6,6 +6,7 @@ import AdminLayout from '@/components/AdminLayout';
 
 export default function AdminPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
@@ -13,14 +14,22 @@ export default function AdminPage() {
   const fetchStudents = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const [{ data, error }, { data: courseData, error: courseError }] = await Promise.all([
+        supabase
         .from('students')
         .select('*')
         .eq('is_consultation', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+        supabase
+          .from('courses')
+          .select('id, title')
+          .order('created_at', { ascending: false }),
+      ]);
 
       if (error) throw error;
+      if (courseError) throw courseError;
       setStudents(data || []);
+      setCourses(courseData || []);
     } catch (err) {
       console.error('Error fetching students:', err);
     } finally {
@@ -71,12 +80,21 @@ export default function AdminPage() {
 
   const deleteStudent = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('students')
-        .delete()
-        .eq('id', id);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('인증이 필요합니다.');
+      }
 
-      if (error) throw error;
+      const res = await fetch(`/api/students/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || '삭제 중 오류가 발생했습니다.');
+      }
 
       setStudents(prev => prev.filter(s => s.id !== id));
       setDeleteTarget(null);
@@ -84,6 +102,14 @@ export default function AdminPage() {
       console.error('Error deleting student:', err);
       alert('삭제 중 오류가 발생했습니다.');
     }
+  };
+
+  const getInterestCourses = (courseIds?: string[] | null) => {
+    if (!courseIds?.length) return '-';
+    const titles = courseIds
+      .map((id) => courses.find((course) => course.id === id)?.title)
+      .filter(Boolean) as string[];
+    return titles.length ? titles.join(', ') : '-';
   };
 
   const formatDate = (dateString: string) => {
@@ -198,6 +224,9 @@ export default function AdminPage() {
                     학부모 연락처
                   </th>
                   <th className="text-left py-3.5 px-5 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    관심 수업
+                  </th>
+                  <th className="text-left py-3.5 px-5 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     신청일
                   </th>
                   <th className="text-left py-3.5 px-5 text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -238,6 +267,9 @@ export default function AdminPage() {
                       >
                         {student.parent_phone}
                       </a>
+                    </td>
+                    <td className="py-4 px-5 text-sm text-slate-600">
+                      {getInterestCourses((student as any).interest_course_ids)}
                     </td>
                     <td className="py-4 px-5 text-sm text-slate-500 font-mono">
                       {formatDate(student.created_at)}

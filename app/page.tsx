@@ -88,6 +88,8 @@ export default function HomePage() {
   const [studentName, setStudentName] = useState('');
   const [studentGrade, setStudentGrade] = useState('');
   const [parentPhone, setParentPhone] = useState('');
+  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
+  const [interestCourseIds, setInterestCourseIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
@@ -101,6 +103,20 @@ export default function HomePage() {
     if (!hideUntil || now > parseInt(hideUntil)) {
       setShowEventPopup(true);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch('/api/courses', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok) return;
+        setCourses(data || []);
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+      }
+    };
+    fetchCourses();
   }, []);
 
   const closeEventPopup = () => setShowEventPopup(false);
@@ -151,6 +167,10 @@ export default function HomePage() {
       setError('올바른 연락처를 입력해주세요.');
       return;
     }
+    if (interestCourseIds.length === 0) {
+      setError('관심 있는 수업을 선택해주세요.');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -162,6 +182,7 @@ export default function HomePage() {
           student_name: studentName.trim(),
           grade: studentGrade,
           parent_phone: parentPhone,
+          interest_course_ids: interestCourseIds,
         }),
       });
       const data = await response.json();
@@ -173,6 +194,7 @@ export default function HomePage() {
       setStudentName('');
       setStudentGrade('');
       setParentPhone('');
+      setInterestCourseIds([]);
     } catch (err) {
       console.error('Error:', err);
       setError(err instanceof Error ? err.message : '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -432,6 +454,40 @@ export default function HomePage() {
                   <p className="mt-2 text-sm text-slate-500">
                     입력하신 번호로 상담 안내 연락을 드립니다
                   </p>
+                </div>
+
+                {/* 관심 있는 수업 */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">
+                    관심 있는 수업
+                  </label>
+                  {courses.length === 0 ? (
+                    <div className="text-sm text-slate-500">불러오는 중...</div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {courses.map((course) => (
+                        <label
+                          key={course.id}
+                          className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl bg-white/80 cursor-pointer hover:border-violet-300"
+                        >
+                          <input
+                            type="checkbox"
+                            value={course.id}
+                            checked={interestCourseIds.includes(course.id)}
+                            onChange={(e) => {
+                              const id = e.target.value;
+                              setInterestCourseIds((prev) =>
+                                e.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
+                              );
+                            }}
+                            disabled={isLoading}
+                            className="h-4 w-4 text-violet-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm text-slate-700">{course.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* 에러 메시지 */}

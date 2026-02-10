@@ -31,7 +31,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
     const body = await request.json();
-    const { student_name, parent_phone, grade } = body;
+    const { student_name, parent_phone, grade, interest_course_ids } = body as {
+      student_name: string;
+      parent_phone: string;
+      grade: string;
+      interest_course_ids?: string[];
+    };
 
     // 유효성 검사
     if (!student_name?.trim()) {
@@ -46,6 +51,9 @@ export async function POST(request: NextRequest) {
     if (phoneNumbers.length < 10 || phoneNumbers.length > 11) {
       return NextResponse.json({ error: '올바른 연락처를 입력해주세요.' }, { status: 400 });
     }
+    if (!Array.isArray(interest_course_ids) || interest_course_ids.length === 0) {
+      return NextResponse.json({ error: '관심 있는 수업을 선택해주세요.' }, { status: 400 });
+    }
 
     const { data, error } = await supabase.from('students').insert({
       student_name: student_name.trim(),
@@ -53,6 +61,7 @@ export async function POST(request: NextRequest) {
       parent_phone,
       status: 'new',
       memo: '',
+      interest_course_ids,
     }).select().single();
 
     if (error) {
