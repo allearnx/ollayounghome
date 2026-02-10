@@ -415,6 +415,14 @@ CREATE TABLE IF NOT EXISTS teacher_expenses (
     net_amount INTEGER NOT NULL
 );
 
+-- 비율제 지원 컬럼 (기존 데이터 호환)
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS pay_type TEXT DEFAULT 'HOURLY' CHECK (pay_type IN ('HOURLY', 'PERCENT'));
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS tuition_per_student INTEGER;
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS student_count INTEGER;
+ALTER TABLE teacher_expenses ADD COLUMN IF NOT EXISTS percent_rate NUMERIC(5, 4);
+ALTER TABLE teacher_expenses ALTER COLUMN class_hours DROP NOT NULL;
+ALTER TABLE teacher_expenses ALTER COLUMN hourly_rate DROP NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_teacher_expenses_date ON teacher_expenses(expense_date DESC);
 CREATE INDEX IF NOT EXISTS idx_teacher_expenses_teacher ON teacher_expenses(teacher_name);
 

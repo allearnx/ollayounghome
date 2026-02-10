@@ -10,11 +10,20 @@ const TAX_RATE = 0.033;
 const toKstDateString = (d: Date) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(d);
 
-const computeAmounts = (hours: number, rate: number) => {
-  const grossAmount = Math.round(hours * rate);
+const computeTax = (grossAmount: number) => {
   const taxAmount = Math.round(grossAmount * TAX_RATE);
   const netAmount = grossAmount - taxAmount;
   return { grossAmount, taxAmount, netAmount };
+};
+
+const computeHourlyAmounts = (hours: number, rate: number) => {
+  const grossAmount = Math.round(hours * rate);
+  return computeTax(grossAmount);
+};
+
+const computePercentAmounts = (tuitionPerStudent: number, studentCount: number, percentRate: number) => {
+  const grossAmount = Math.round(tuitionPerStudent * studentCount * percentRate);
+  return computeTax(grossAmount);
 };
 
 export async function GET(request: NextRequest) {
@@ -62,11 +71,24 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
 
     const body = await request.json();
-    const { expense_date, teacher_name, class_hours, hourly_rate } = body as {
+    const {
+      expense_date,
+      teacher_name,
+      pay_type,
+      class_hours,
+      hourly_rate,
+      tuition_per_student,
+      student_count,
+      percent_rate,
+    } = body as {
       expense_date: string;
       teacher_name: string;
-      class_hours: number;
-      hourly_rate: number;
+      pay_type?: 'HOURLY' | 'PERCENT';
+      class_hours?: number;
+      hourly_rate?: number;
+      tuition_per_student?: number;
+      student_count?: number;
+      percent_rate?: number;
     };
 
     if (!expense_date) {
@@ -75,26 +97,45 @@ export async function POST(request: NextRequest) {
     if (!teacher_name?.trim()) {
       return NextResponse.json({ error: '선생님 이름을 입력해주세요.' }, { status: 400 });
     }
-    if (!class_hours || class_hours <= 0) {
-      return NextResponse.json({ error: '수업 시간을 입력해주세요.' }, { status: 400 });
-    }
-    if (!hourly_rate || hourly_rate <= 0) {
-      return NextResponse.json({ error: '시간당 페이를 입력해주세요.' }, { status: 400 });
-    }
+    const payType: 'HOURLY' | 'PERCENT' = pay_type === 'PERCENT' ? 'PERCENT' : 'HOURLY';
 
-    const { grossAmount, taxAmount, netAmount } = computeAmounts(class_hours, hourly_rate);
+    let amounts: { grossAmount: number; taxAmount: number; netAmount: number };
+    if (payType === 'HOURLY') {
+      if (!class_hours || class_hours <= 0) {
+        return NextResponse.json({ error: '수업 시간을 입력해주세요.' }, { status: 400 });
+      }
+      if (!hourly_rate || hourly_rate <= 0) {
+        return NextResponse.json({ error: '시간당 페이를 입력해주세요.' }, { status: 400 });
+      }
+      amounts = computeHourlyAmounts(class_hours, hourly_rate);
+    } else {
+      if (!tuition_per_student || tuition_per_student <= 0) {
+        return NextResponse.json({ error: '수강료를 입력해주세요.' }, { status: 400 });
+      }
+      if (!student_count || student_count <= 0) {
+        return NextResponse.json({ error: '인원을 입력해주세요.' }, { status: 400 });
+      }
+      if (!percent_rate || percent_rate <= 0) {
+        return NextResponse.json({ error: '비율(%)을 입력해주세요.' }, { status: 400 });
+      }
+      amounts = computePercentAmounts(tuition_per_student, student_count, percent_rate);
+    }
 
     const { data, error } = await supabase
       .from('teacher_expenses')
       .insert({
         expense_date,
         teacher_name: teacher_name.trim(),
-        class_hours,
-        hourly_rate,
+        pay_type: payType,
+        class_hours: payType === 'HOURLY' ? class_hours : null,
+        hourly_rate: payType === 'HOURLY' ? hourly_rate : null,
+        tuition_per_student: payType === 'PERCENT' ? tuition_per_student : null,
+        student_count: payType === 'PERCENT' ? student_count : null,
+        percent_rate: payType === 'PERCENT' ? percent_rate : null,
         tax_rate: TAX_RATE,
-        gross_amount: grossAmount,
-        tax_amount: taxAmount,
-        net_amount: netAmount,
+        gross_amount: amounts.grossAmount,
+        tax_amount: amounts.taxAmount,
+        net_amount: amounts.netAmount,
       })
       .select('*')
       .single();

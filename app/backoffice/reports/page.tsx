@@ -31,8 +31,12 @@ export default function ReportsPage() {
     id: string;
     expense_date: string;
     teacher_name: string;
+    pay_type: 'HOURLY' | 'PERCENT';
     class_hours: number;
     hourly_rate: number;
+    tuition_per_student: number | null;
+    student_count: number | null;
+    percent_rate: number | null;
     gross_amount: number;
     tax_amount: number;
     net_amount: number;
@@ -40,8 +44,12 @@ export default function ReportsPage() {
   const [expenseForm, setExpenseForm] = useState({
     expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
     teacher_name: '',
+    pay_type: 'HOURLY' as 'HOURLY' | 'PERCENT',
     class_hours: '',
     hourly_rate: '',
+    tuition_per_student: '',
+    student_count: '',
+    percent_rate: '',
   });
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
@@ -51,8 +59,16 @@ export default function ReportsPage() {
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;
   };
-  const computeExpenseAmounts = (hours: number, rate: number) => {
-    const gross = Math.round(hours * rate);
+  const computeExpenseAmounts = (form: typeof expenseForm) => {
+    const hours = parseNumber(form.class_hours);
+    const rate = parseNumber(form.hourly_rate);
+    const tuition = parseNumber(form.tuition_per_student);
+    const students = parseNumber(form.student_count);
+    const percent = parseNumber(form.percent_rate) / 100;
+    const gross =
+      form.pay_type === 'PERCENT'
+        ? Math.round(tuition * students * percent)
+        : Math.round(hours * rate);
     const tax = Math.round(gross * 0.033);
     const net = gross - tax;
     return { gross, tax, net };
@@ -129,13 +145,32 @@ export default function ReportsPage() {
     }
     const hours = parseNumber(expenseForm.class_hours);
     const rate = parseNumber(expenseForm.hourly_rate);
-    if (!hours || hours <= 0) {
-      alert('수업 시간을 입력해주세요.');
-      return;
-    }
-    if (!rate || rate <= 0) {
-      alert('시간당 페이를 입력해주세요.');
-      return;
+    const tuition = parseNumber(expenseForm.tuition_per_student);
+    const students = parseNumber(expenseForm.student_count);
+    const percent = parseNumber(expenseForm.percent_rate);
+
+    if (expenseForm.pay_type === 'HOURLY') {
+      if (!hours || hours <= 0) {
+        alert('수업 시간을 입력해주세요.');
+        return;
+      }
+      if (!rate || rate <= 0) {
+        alert('시간당 페이를 입력해주세요.');
+        return;
+      }
+    } else {
+      if (!tuition || tuition <= 0) {
+        alert('수강료를 입력해주세요.');
+        return;
+      }
+      if (!students || students <= 0) {
+        alert('인원을 입력해주세요.');
+        return;
+      }
+      if (!percent || percent <= 0) {
+        alert('비율(%)을 입력해주세요.');
+        return;
+      }
     }
 
     setIsSavingExpense(true);
@@ -148,8 +183,12 @@ export default function ReportsPage() {
       const payload = {
         expense_date: expenseForm.expense_date,
         teacher_name: expenseForm.teacher_name.trim(),
-        class_hours: hours,
-        hourly_rate: rate,
+        pay_type: expenseForm.pay_type,
+        class_hours: expenseForm.pay_type === 'HOURLY' ? hours : null,
+        hourly_rate: expenseForm.pay_type === 'HOURLY' ? rate : null,
+        tuition_per_student: expenseForm.pay_type === 'PERCENT' ? tuition : null,
+        student_count: expenseForm.pay_type === 'PERCENT' ? students : null,
+        percent_rate: expenseForm.pay_type === 'PERCENT' ? percent / 100 : null,
       };
 
       const url = editingExpenseId
@@ -170,8 +209,12 @@ export default function ReportsPage() {
       setExpenseForm({
         expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
         teacher_name: '',
+        pay_type: 'HOURLY',
         class_hours: '',
         hourly_rate: '',
+        tuition_per_student: '',
+        student_count: '',
+        percent_rate: '',
       });
       setEditingExpenseId(null);
       fetchExpenses();
@@ -188,8 +231,12 @@ export default function ReportsPage() {
     setExpenseForm({
       expense_date: expense.expense_date,
       teacher_name: expense.teacher_name,
-      class_hours: String(expense.class_hours),
-      hourly_rate: String(expense.hourly_rate),
+      pay_type: expense.pay_type || 'HOURLY',
+      class_hours: expense.class_hours ? String(expense.class_hours) : '',
+      hourly_rate: expense.hourly_rate ? String(expense.hourly_rate) : '',
+      tuition_per_student: expense.tuition_per_student ? String(expense.tuition_per_student) : '',
+      student_count: expense.student_count ? String(expense.student_count) : '',
+      percent_rate: expense.percent_rate ? String(Math.round(expense.percent_rate * 10000) / 100) : '',
     });
   };
 
@@ -198,8 +245,12 @@ export default function ReportsPage() {
     setExpenseForm({
       expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
       teacher_name: '',
+      pay_type: 'HOURLY',
       class_hours: '',
       hourly_rate: '',
+      tuition_per_student: '',
+      student_count: '',
+      percent_rate: '',
     });
   };
 
@@ -240,9 +291,7 @@ export default function ReportsPage() {
     return Math.max(1, ...vals);
   }, [report]);
 
-  const formHours = parseNumber(expenseForm.class_hours);
-  const formRate = parseNumber(expenseForm.hourly_rate);
-  const formAmounts = computeExpenseAmounts(formHours, formRate);
+  const formAmounts = computeExpenseAmounts(expenseForm);
 
   return (
     <AdminLayout requiredRole="admin">
@@ -392,7 +441,7 @@ export default function ReportsPage() {
           <p className="text-sm text-slate-500 mt-1">수업 시간과 시간당 페이를 입력하면 자동 계산됩니다.</p>
         </div>
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">날짜</label>
               <input
@@ -412,24 +461,75 @@ export default function ReportsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">수업 시간</label>
-              <input
-                type="number"
-                step="0.5"
-                value={expenseForm.class_hours}
-                onChange={(e) => setExpenseForm((prev) => ({ ...prev, class_hours: e.target.value }))}
+              <label className="block text-sm font-medium text-slate-700 mb-1">지급 방식</label>
+              <select
+                value={expenseForm.pay_type}
+                onChange={(e) =>
+                  setExpenseForm((prev) => ({
+                    ...prev,
+                    pay_type: e.target.value as 'HOURLY' | 'PERCENT',
+                  }))
+                }
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-              />
+              >
+                <option value="HOURLY">시간당</option>
+                <option value="PERCENT">비율제</option>
+              </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">시간당 페이</label>
-              <input
-                type="number"
-                value={expenseForm.hourly_rate}
-                onChange={(e) => setExpenseForm((prev) => ({ ...prev, hourly_rate: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-              />
-            </div>
+            {expenseForm.pay_type === 'HOURLY' ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">수업 시간</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={expenseForm.class_hours}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, class_hours: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">시간당 페이</label>
+                  <input
+                    type="number"
+                    value={expenseForm.hourly_rate}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, hourly_rate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-400"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">수강료</label>
+                  <input
+                    type="number"
+                    value={expenseForm.tuition_per_student}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, tuition_per_student: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">인원</label>
+                  <input
+                    type="number"
+                    value={expenseForm.student_count}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, student_count: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">비율(%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={expenseForm.percent_rate}
+                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, percent_rate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm text-slate-700">
@@ -466,8 +566,8 @@ export default function ReportsPage() {
                   <tr>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">날짜</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">선생님</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">시간</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">시간당</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">방식</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">기준</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">총액</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">세금</th>
                     <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">실지급</th>
@@ -479,8 +579,14 @@ export default function ReportsPage() {
                     <tr key={expense.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3 text-slate-700">{expense.expense_date}</td>
                       <td className="px-5 py-3 text-slate-800 font-medium">{expense.teacher_name}</td>
-                      <td className="px-5 py-3 text-right">{expense.class_hours}</td>
-                      <td className="px-5 py-3 text-right">{formatKRW(expense.hourly_rate)}</td>
+                      <td className="px-5 py-3 text-slate-700">
+                        {expense.pay_type === 'PERCENT' ? '비율제' : '시간당'}
+                      </td>
+                      <td className="px-5 py-3 text-right text-slate-700">
+                        {expense.pay_type === 'PERCENT'
+                          ? `${formatKRW(expense.tuition_per_student || 0)} × ${expense.student_count || 0}명 × ${Math.round((expense.percent_rate || 0) * 10000) / 100}%`
+                          : `${expense.class_hours || 0}시간 × ${formatKRW(expense.hourly_rate || 0)}`}
+                      </td>
                       <td className="px-5 py-3 text-right">{formatKRW(expense.gross_amount)}</td>
                       <td className="px-5 py-3 text-right text-red-600">{formatKRW(expense.tax_amount)}</td>
                       <td className="px-5 py-3 text-right font-semibold">{formatKRW(expense.net_amount)}</td>
