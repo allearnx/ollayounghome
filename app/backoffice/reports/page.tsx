@@ -13,6 +13,8 @@ export default function ReportsPage() {
       gross: number;
       refunds: number;
       net: number;
+      expenses: number;
+      profit: number;
       paidCount: number;
       cancelledCount: number;
     }>;
@@ -25,8 +27,36 @@ export default function ReportsPage() {
       cancelledCount: number;
     }>;
   } | null>(null);
+  const [expenses, setExpenses] = useState<Array<{
+    id: string;
+    expense_date: string;
+    teacher_name: string;
+    class_hours: number;
+    hourly_rate: number;
+    gross_amount: number;
+    tax_amount: number;
+    net_amount: number;
+  }>>([]);
+  const [expenseForm, setExpenseForm] = useState({
+    expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+    teacher_name: '',
+    class_hours: '',
+    hourly_rate: '',
+  });
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
 
   const formatKRW = (n: number) => `₩${new Intl.NumberFormat('ko-KR').format(n)}`;
+  const parseNumber = (value: string) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const computeExpenseAmounts = (hours: number, rate: number) => {
+    const gross = Math.round(hours * rate);
+    const tax = Math.round(gross * 0.033);
+    const net = gross - tax;
+    return { gross, tax, net };
+  };
 
   const currentMonth = useMemo(() => {
     if (!report?.months?.length) return null;
@@ -68,8 +98,135 @@ export default function ReportsPage() {
     }
   };
 
+  const fetchExpenses = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
+
+      const res = await fetch('/api/admin/teacher-expenses?limit=200', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || '강사료 내역을 불러올 수 없습니다.');
+      setExpenses(data?.expenses || []);
+    } catch (e) {
+      console.error('Teacher expenses fetch error:', e);
+      setExpenses([]);
+    }
+  };
+
+  const saveExpense = async () => {
+    if (!expenseForm.expense_date) {
+      alert('날짜를 입력해주세요.');
+      return;
+    }
+    if (!expenseForm.teacher_name.trim()) {
+      alert('선생님 이름을 입력해주세요.');
+      return;
+    }
+    const hours = parseNumber(expenseForm.class_hours);
+    const rate = parseNumber(expenseForm.hourly_rate);
+    if (!hours || hours <= 0) {
+      alert('수업 시간을 입력해주세요.');
+      return;
+    }
+    if (!rate || rate <= 0) {
+      alert('시간당 페이를 입력해주세요.');
+      return;
+    }
+
+    setIsSavingExpense(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
+
+      const payload = {
+        expense_date: expenseForm.expense_date,
+        teacher_name: expenseForm.teacher_name.trim(),
+        class_hours: hours,
+        hourly_rate: rate,
+      };
+
+      const url = editingExpenseId
+        ? `/api/admin/teacher-expenses/${editingExpenseId}`
+        : '/api/admin/teacher-expenses';
+      const method = editingExpenseId ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || '강사료 저장에 실패했습니다.');
+
+      setExpenseForm({
+        expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+        teacher_name: '',
+        class_hours: '',
+        hourly_rate: '',
+      });
+      setEditingExpenseId(null);
+      fetchExpenses();
+      fetchReport();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '강사료 저장에 실패했습니다.');
+    } finally {
+      setIsSavingExpense(false);
+    }
+  };
+
+  const startEditExpense = (expense: (typeof expenses)[number]) => {
+    setEditingExpenseId(expense.id);
+    setExpenseForm({
+      expense_date: expense.expense_date,
+      teacher_name: expense.teacher_name,
+      class_hours: String(expense.class_hours),
+      hourly_rate: String(expense.hourly_rate),
+    });
+  };
+
+  const cancelEditExpense = () => {
+    setEditingExpenseId(null);
+    setExpenseForm({
+      expense_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+      teacher_name: '',
+      class_hours: '',
+      hourly_rate: '',
+    });
+  };
+
+  const deleteExpense = async (id: string) => {
+    if (!confirm('강사료 내역을 삭제할까요?')) return;
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
+
+      const res = await fetch(`/api/admin/teacher-expenses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || '강사료 삭제에 실패했습니다.');
+      fetchExpenses();
+      fetchReport();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '강사료 삭제에 실패했습니다.');
+    }
+  };
+
   useEffect(() => {
     fetchReport();
+    fetchExpenses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,6 +239,10 @@ export default function ReportsPage() {
     const vals = report?.byCategory?.map((c) => c.net) ?? [];
     return Math.max(1, ...vals);
   }, [report]);
+
+  const formHours = parseNumber(expenseForm.class_hours);
+  const formRate = parseNumber(expenseForm.hourly_rate);
+  const formAmounts = computeExpenseAmounts(formHours, formRate);
 
   return (
     <AdminLayout requiredRole="admin">
@@ -103,7 +264,7 @@ export default function ReportsPage() {
       )}
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
           <p className="text-sm font-medium text-violet-100 mb-1">이번 달 총매출</p>
           <p className="text-3xl font-bold">
@@ -138,6 +299,15 @@ export default function ReportsPage() {
           </p>
           <p className="text-xs text-slate-500 mt-4">
             {isLoading ? '' : `결제 ${currentMonth?.paidCount ?? 0}건`}
+          </p>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-violet-100 shadow-sm">
+          <p className="text-sm font-medium text-slate-500 mb-1">이번 달 지출</p>
+          <p className="text-2xl font-bold text-slate-800">
+            {isLoading ? '—' : formatKRW(currentMonth?.expenses ?? 0)}
+          </p>
+          <p className="text-xs text-slate-500 mt-4">
+            {isLoading ? '' : `순이익 ${formatKRW(currentMonth?.profit ?? 0)}`}
           </p>
         </div>
       </div>
@@ -215,6 +385,130 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* 강사료 입력/목록 */}
+      <div className="bg-white rounded-xl border border-violet-100 shadow-sm overflow-hidden mb-6">
+        <div className="p-6 border-b border-slate-100">
+          <h3 className="text-lg font-semibold text-slate-800">강사료 입력</h3>
+          <p className="text-sm text-slate-500 mt-1">수업 시간과 시간당 페이를 입력하면 자동 계산됩니다.</p>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">날짜</label>
+              <input
+                type="date"
+                value={expenseForm.expense_date}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, expense_date: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">선생님 이름</label>
+              <input
+                type="text"
+                value={expenseForm.teacher_name}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, teacher_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">수업 시간</label>
+              <input
+                type="number"
+                step="0.5"
+                value={expenseForm.class_hours}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, class_hours: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">시간당 페이</label>
+              <input
+                type="number"
+                value={expenseForm.hourly_rate}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, hourly_rate: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-sm text-slate-700">
+            <div>총액: <strong>{formatKRW(formAmounts.gross || 0)}</strong></div>
+            <div>세금 3.3%: <strong>{formatKRW(formAmounts.tax || 0)}</strong></div>
+            <div>실 지급금: <strong>{formatKRW(formAmounts.net || 0)}</strong></div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={saveExpense}
+              disabled={isSavingExpense}
+              className="px-4 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg disabled:opacity-50"
+            >
+              {editingExpenseId ? '수정 저장' : '추가'}
+            </button>
+            {editingExpenseId && (
+              <button
+                onClick={cancelEditExpense}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg"
+              >
+                취소
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="border-t border-slate-100">
+          {expenses.length === 0 ? (
+            <div className="p-6 text-sm text-slate-500">등록된 강사료가 없습니다.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">날짜</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">선생님</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">시간</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">시간당</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">총액</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">세금</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">실지급</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">관리</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {expenses.map((expense) => (
+                    <tr key={expense.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-slate-700">{expense.expense_date}</td>
+                      <td className="px-5 py-3 text-slate-800 font-medium">{expense.teacher_name}</td>
+                      <td className="px-5 py-3 text-right">{expense.class_hours}</td>
+                      <td className="px-5 py-3 text-right">{formatKRW(expense.hourly_rate)}</td>
+                      <td className="px-5 py-3 text-right">{formatKRW(expense.gross_amount)}</td>
+                      <td className="px-5 py-3 text-right text-red-600">{formatKRW(expense.tax_amount)}</td>
+                      <td className="px-5 py-3 text-right font-semibold">{formatKRW(expense.net_amount)}</td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => startEditExpense(expense)}
+                            className="px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => deleteExpense(expense.id)}
+                            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* 상세 리포트 테이블 */}
       <div className="bg-white rounded-xl border border-violet-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
@@ -237,6 +531,8 @@ export default function ReportsPage() {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">총매출</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">환불</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">순매출</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">지출</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">순이익</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">결제/환불(건)</th>
                 </tr>
               </thead>
@@ -247,6 +543,8 @@ export default function ReportsPage() {
                     <td className="px-6 py-4 text-right text-slate-800">{formatKRW(m.gross)}</td>
                     <td className="px-6 py-4 text-right text-red-600">{formatKRW(m.refunds)}</td>
                     <td className="px-6 py-4 text-right font-semibold text-slate-800">{formatKRW(m.net)}</td>
+                    <td className="px-6 py-4 text-right text-slate-700">{formatKRW(m.expenses)}</td>
+                    <td className="px-6 py-4 text-right font-semibold text-slate-800">{formatKRW(m.profit)}</td>
                     <td className="px-6 py-4 text-right text-slate-500">
                       {m.paidCount} / {m.cancelledCount}
                     </td>

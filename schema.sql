@@ -397,3 +397,41 @@ CREATE INDEX IF NOT EXISTS idx_manual_payments_deleted_at ON manual_payments(del
 ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS student_name TEXT;
 ALTER TABLE manual_payments ADD COLUMN IF NOT EXISTS parent_phone TEXT;
 ALTER TABLE manual_payments ALTER COLUMN student_id DROP NOT NULL;
+
+-- ============================================
+-- 강사료 지출 테이블 (teacher_expenses)
+-- ============================================
+CREATE TABLE IF NOT EXISTS teacher_expenses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expense_date DATE NOT NULL,
+    teacher_name TEXT NOT NULL,
+    class_hours NUMERIC(6, 2) NOT NULL,
+    hourly_rate INTEGER NOT NULL,
+    tax_rate NUMERIC(5, 4) NOT NULL DEFAULT 0.033,
+    gross_amount INTEGER NOT NULL,
+    tax_amount INTEGER NOT NULL,
+    net_amount INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_teacher_expenses_date ON teacher_expenses(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_teacher_expenses_teacher ON teacher_expenses(teacher_name);
+
+ALTER TABLE teacher_expenses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view teacher_expenses" ON teacher_expenses
+    FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can insert teacher_expenses" ON teacher_expenses
+    FOR INSERT
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can update teacher_expenses" ON teacher_expenses
+    FOR UPDATE
+    USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can delete teacher_expenses" ON teacher_expenses
+    FOR DELETE
+    USING (auth.role() = 'authenticated');

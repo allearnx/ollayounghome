@@ -10,6 +10,8 @@ type MonthBucket = {
   gross: number;
   refunds: number;
   net: number;
+  expenses: number;
+  profit: number;
   paidCount: number;
   cancelledCount: number;
 };
@@ -65,6 +67,13 @@ function monthRangeKst(month: string): { startIso: string; endIso: string } {
   return { startIso, endIso };
 }
 
+function dateKeyFromKst(dateLike: string | null | undefined): string | null {
+  if (!dateLike) return null;
+  const d = new Date(dateLike);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(d);
+}
+
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request);
@@ -78,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     const monthMap = new Map<string, MonthBucket>();
     months.forEach((m) => {
-      monthMap.set(m, { month: m, gross: 0, refunds: 0, net: 0, paidCount: 0, cancelledCount: 0 });
+      monthMap.set(m, { month: m, gross: 0, refunds: 0, net: 0, expenses: 0, profit: 0, paidCount: 0, cancelledCount: 0 });
     });
 
     const catMap = new Map<string, CategoryBucket>();
@@ -92,7 +101,10 @@ export async function GET(request: NextRequest) {
     };
 
     // PG 결제(paid)와 수동 결제를 병렬로 조회 (삭제되지 않은 것만)
-    const [paidResult, manualResult] = await Promise.all([
+    const rangeStartDate = dateKeyFromKst(rangeStart);
+    const rangeEndDate = dateKeyFromKst(rangeEnd);
+
+    const [paidResult, manualResult, expenseResult] = await Promise.all([
       supabase
         .from('payments')
         .select('amount, paid_at, course_id, courses(category)')
@@ -106,6 +118,11 @@ export async function GET(request: NextRequest) {
         .is('deleted_at', null)
         .gte('paid_at', rangeStart)
         .lt('paid_at', rangeEnd),
+      supabase
+        .from('teacher_expenses')
+        .select('expense_date, net_amount')
+        .gte('expense_date', rangeStartDate || '')
+        .lt('expense_date', rangeEndDate || ''),
     ]);
 
     if (paidResult.error) {
@@ -116,6 +133,11 @@ export async function GET(request: NextRequest) {
     if (manualResult.error) {
       console.error('Admin reports manualErr:', manualResult.error);
       return NextResponse.json({ error: '수동 결제 데이터를 불러올 수 없습니다.' }, { status: 500 });
+    }
+
+    if (expenseResult.error) {
+      console.error('Admin reports expenseErr:', expenseResult.error);
+      return NextResponse.json({ error: '강사료 데이터를 불러올 수 없습니다.' }, { status: 500 });
     }
 
     // PG 결제 매출 집계
@@ -148,6 +170,15 @@ export async function GET(request: NextRequest) {
       const cb = ensureCat(String(category));
       cb.gross += amount;
       cb.paidCount += 1;
+    });
+
+    // 강사료 지출 집계
+    (expenseResult.data ?? []).forEach((r: any) => {
+      const mk = monthKeyFromKst(r?.expense_date);
+      if (!mk || !monthMap.has(mk)) return;
+      const amount = Number(r?.net_amount ?? 0) || 0;
+      const bucket = monthMap.get(mk)!;
+      bucket.expenses += amount;
     });
 
     // Cancelled (refunds). Prefer cancelled_at + cancelled_amount. (삭제되지 않은 것만)
@@ -207,9 +238,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // finalize net
+    // finalize net & profit
     monthMap.forEach((b) => {
       b.net = b.gross - b.refunds;
+      b.profit = b.net - b.expenses;
     });
     catMap.forEach((b) => {
       b.net = b.gross - b.refunds;
