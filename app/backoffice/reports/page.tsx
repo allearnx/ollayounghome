@@ -51,6 +51,12 @@ export default function ReportsPage() {
     student_count: '',
     percent_rate: '',
   });
+  const [hourCalc, setHourCalc] = useState({
+    sessions_per_week: '',
+    weeks_count: '',
+    minutes_per_session: '',
+  });
+  const [isManualHours, setIsManualHours] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
 
@@ -73,6 +79,19 @@ export default function ReportsPage() {
     const net = gross - tax;
     return { gross, tax, net };
   };
+
+  const computedMinutes =
+    parseNumber(hourCalc.sessions_per_week) *
+    parseNumber(hourCalc.weeks_count) *
+    parseNumber(hourCalc.minutes_per_session);
+  const computedHours = Math.round((computedMinutes / 60) * 100) / 100;
+
+  useEffect(() => {
+    if (expenseForm.pay_type !== 'HOURLY') return;
+    if (isManualHours) return;
+    if (!computedHours || computedHours <= 0) return;
+    setExpenseForm((prev) => ({ ...prev, class_hours: String(computedHours) }));
+  }, [computedHours, expenseForm.pay_type, isManualHours]);
 
   const currentMonth = useMemo(() => {
     if (!report?.months?.length) return null;
@@ -216,6 +235,8 @@ export default function ReportsPage() {
         student_count: '',
         percent_rate: '',
       });
+      setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
+      setIsManualHours(false);
       setEditingExpenseId(null);
       fetchExpenses();
       fetchReport();
@@ -228,6 +249,7 @@ export default function ReportsPage() {
 
   const startEditExpense = (expense: (typeof expenses)[number]) => {
     setEditingExpenseId(expense.id);
+    setIsManualHours(true);
     setExpenseForm({
       expense_date: expense.expense_date,
       teacher_name: expense.teacher_name,
@@ -238,6 +260,7 @@ export default function ReportsPage() {
       student_count: expense.student_count ? String(expense.student_count) : '',
       percent_rate: expense.percent_rate ? String(Math.round(expense.percent_rate * 10000) / 100) : '',
     });
+    setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
   };
 
   const cancelEditExpense = () => {
@@ -252,6 +275,8 @@ export default function ReportsPage() {
       student_count: '',
       percent_rate: '',
     });
+    setHourCalc({ sessions_per_week: '', weeks_count: '', minutes_per_session: '' });
+    setIsManualHours(false);
   };
 
   const deleteExpense = async (id: string) => {
@@ -484,7 +509,10 @@ export default function ReportsPage() {
                     type="number"
                     step="0.5"
                     value={expenseForm.class_hours}
-                    onChange={(e) => setExpenseForm((prev) => ({ ...prev, class_hours: e.target.value }))}
+                    onChange={(e) => {
+                      setIsManualHours(true);
+                      setExpenseForm((prev) => ({ ...prev, class_hours: e.target.value }));
+                    }}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
                   />
                 </div>
@@ -496,6 +524,53 @@ export default function ReportsPage() {
                     onChange={(e) => setExpenseForm((prev) => ({ ...prev, hourly_rate: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-400"
                   />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">자동 계산</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="number"
+                      placeholder="주당 횟수"
+                      value={hourCalc.sessions_per_week}
+                      onChange={(e) => {
+                        setIsManualHours(false);
+                        setHourCalc((prev) => ({ ...prev, sessions_per_week: e.target.value }));
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                    />
+                    <input
+                      type="number"
+                      placeholder="주수"
+                      value={hourCalc.weeks_count}
+                      onChange={(e) => {
+                        setIsManualHours(false);
+                        setHourCalc((prev) => ({ ...prev, weeks_count: e.target.value }));
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                    />
+                    <input
+                      type="number"
+                      placeholder="회당 분"
+                      value={hourCalc.minutes_per_session}
+                      onChange={(e) => {
+                        setIsManualHours(false);
+                        setHourCalc((prev) => ({ ...prev, minutes_per_session: e.target.value }));
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                    />
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">
+                    총 {computedMinutes || 0}분 = {computedHours || 0}시간
+                    {isManualHours && (
+                      <button
+                        type="button"
+                        onClick={() => setIsManualHours(false)}
+                        className="ml-2 text-violet-600 hover:text-violet-700"
+                      >
+                        자동 계산 사용
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
