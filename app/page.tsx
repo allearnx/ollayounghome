@@ -89,6 +89,7 @@ export default function HomePage() {
   const [studentGrade, setStudentGrade] = useState('');
   const [parentPhone, setParentPhone] = useState('');
   const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
+  const [coursesError, setCoursesError] = useState('');
   const [interestCourseIds, setInterestCourseIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -108,12 +109,15 @@ export default function HomePage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch('/api/courses', { cache: 'no-store' });
+        const res = await fetch('/api/public/courses', { cache: 'no-store' });
         const data = await res.json();
-        if (!res.ok) return;
+        if (!res.ok) {
+          throw new Error(data?.error || '강좌 목록을 불러올 수 없습니다.');
+        }
         setCourses(data || []);
       } catch (err) {
         console.error('Error fetching courses:', err);
+        setCoursesError('강좌 목록을 불러올 수 없습니다.');
       }
     };
     fetchCourses();
@@ -461,7 +465,9 @@ export default function HomePage() {
                   <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">
                     관심 있는 수업
                   </label>
-                  {courses.length === 0 ? (
+                  {coursesError ? (
+                    <div className="text-sm text-red-500">{coursesError}</div>
+                  ) : courses.length === 0 ? (
                     <div className="text-sm text-slate-500">불러오는 중...</div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
