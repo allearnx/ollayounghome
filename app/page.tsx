@@ -217,15 +217,15 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* 왼쪽: 텍스트 */}
-            <div className="flex-1 text-center lg:text-left">
+            <div className="flex-[2] text-center lg:text-left">
               <AnimatedSection>
-                <p className="text-[#86868b] text-xl sm:text-2xl lg:text-3xl font-medium tracking-tight mb-6">
+                <p className="text-[#86868b] text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight mb-8">
                   온라인 실시간 수업
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={100}>
-                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-8">
+                <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight mb-10">
                   <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
                     성적의 한계를<br />뛰어넘다.
                   </span>
@@ -233,34 +233,21 @@ export default function HomePage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <p className="text-[#1d1d1f] text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight mb-10">
+                <p className="text-[#1d1d1f] text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight">
                   영어, 이제는 온라인에서 끝내세요.
                 </p>
-              </AnimatedSection>
-
-              <AnimatedSection delay={200}>
-                <button
-                  onClick={scrollToForm}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white text-lg font-bold rounded-2xl transition-all shadow-xl shadow-violet-300/30 hover:shadow-violet-400/40 hover:scale-105"
-                >
-                  무료 상담 신청하기
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
               </AnimatedSection>
             </div>
 
             {/* 오른쪽: 선생님 사진 */}
             <AnimatedSection delay={200} className="flex-1 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-md lg:max-w-lg">
-                <div className="absolute -inset-4 bg-gradient-to-br from-violet-200/40 to-purple-200/40 rounded-[2.5rem] blur-2xl" />
+              <div className="w-full max-w-sm lg:max-w-md">
                 <Image
                   src="/hero-teacher.png"
                   alt="올라운더 영어 선생님"
                   width={600}
                   height={750}
-                  className="relative rounded-3xl w-full h-auto object-cover"
+                  className="w-full h-auto object-cover"
                   priority
                 />
               </div>
