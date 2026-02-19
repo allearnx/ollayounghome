@@ -217,7 +217,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full">
           <div className="flex flex-col lg:flex-row items-end gap-12 lg:gap-16">
             {/* 왼쪽: 텍스트 */}
-            <div className="flex-[3] text-center lg:text-left self-center pb-20">
+            <div className="flex-[3] text-center lg:text-left self-center pb-12">
               <AnimatedSection>
                 <p className="text-[#86868b] text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight mb-8">
                   온라인 실시간 수업
