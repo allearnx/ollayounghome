@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "올라운더 홈 - 수강 신청",
   description: "올라운더 홈 학원 수강 신청 시스템",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

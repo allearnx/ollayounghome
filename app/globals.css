@@ -221,6 +221,35 @@ textarea:focus {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* ===== 로고 마키 (무한 스크롤) ===== */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee-left {
+  animation: marquee-left 40s linear infinite;
+}
+
+.marquee-right {
+  animation: marquee-right 40s linear infinite;
+}
+
+.marquee-wrapper:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 /* ===== 반응형 조정 ===== */
 @media (max-width: 768px) {
   .fade-up {
