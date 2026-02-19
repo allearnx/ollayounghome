@@ -213,11 +213,11 @@ export default function HomePage() {
       <Header />
 
       {/* ===== 1. 히어로 배너 (Hero Section) ===== */}
-      <section className="relative min-h-[70vh] bg-white pt-32 pb-20 overflow-hidden flex items-center">
+      <section className="relative min-h-[70vh] bg-white pt-32 overflow-hidden flex items-end">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-end gap-12 lg:gap-16">
             {/* 왼쪽: 텍스트 */}
-            <div className="flex-[3] text-center lg:text-left">
+            <div className="flex-[3] text-center lg:text-left self-center pb-20">
               <AnimatedSection>
                 <p className="text-[#86868b] text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight mb-8">
                   온라인 실시간 수업
