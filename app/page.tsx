@@ -217,7 +217,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 w-full">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* 왼쪽: 텍스트 */}
-            <div className="flex-[2] text-center lg:text-left">
+            <div className="flex-[3] text-center lg:text-left">
               <AnimatedSection>
                 <p className="text-[#86868b] text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight mb-8">
                   온라인 실시간 수업
@@ -240,8 +240,8 @@ export default function HomePage() {
             </div>
 
             {/* 오른쪽: 선생님 사진 */}
-            <AnimatedSection delay={200} className="flex-1 flex justify-center lg:justify-end">
-              <div className="w-full max-w-sm lg:max-w-md">
+            <AnimatedSection delay={200} className="flex-[2] flex justify-center lg:justify-end">
+              <div className="w-full max-w-md lg:max-w-lg">
                 <Image
                   src="/hero-teacher.png"
                   alt="올라운더 영어 선생님"
