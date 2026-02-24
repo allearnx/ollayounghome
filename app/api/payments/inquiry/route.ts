@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
 
 export const dynamic = 'force-dynamic';
 
-// Lazy initialization to avoid build-time errors
 function getTossSecretKey() {
   return process.env.TOSS_SECRET_KEY!;
 }
 
-// GET: 토스페이먼츠 결제 상세 조회
+// GET: 토스페이먼츠 결제 상세 조회 (관리자 전용)
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin(request);
     const TOSS_SECRET_KEY = getTossSecretKey();
     const { searchParams } = new URL(request.url);
     const paymentKey = searchParams.get('paymentKey');
@@ -106,6 +107,9 @@ export async function GET(request: NextRequest) {
       isPartialCancelable: data.isPartialCancelable,
     });
   } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Payment inquiry error:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },

@@ -27,24 +27,11 @@ CREATE INDEX IF NOT EXISTS idx_students_parent_phone ON students(parent_phone);
 -- RLS (Row Level Security) 정책 설정
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 
--- 모든 사용자가 INSERT 가능 (학부모 신청용)
-CREATE POLICY "Anyone can insert students" ON students
-    FOR INSERT
-    WITH CHECK (true);
-
--- 인증된 사용자만 SELECT, UPDATE 가능 (관리자용)
--- 참고: 실제 운영시에는 더 세밀한 권한 설정 필요
-CREATE POLICY "Authenticated users can view students" ON students
-    FOR SELECT
-    USING (true);
-
-CREATE POLICY "Authenticated users can update students" ON students
-    FOR UPDATE
-    USING (true);
-
-CREATE POLICY "Authenticated users can delete students" ON students
-    FOR DELETE
-    USING (true);
+-- 운영 환경: 모든 CRUD는 서버 사이드 service role 클라이언트로만 수행.
+-- anon/authenticated 직접 접근을 차단하여 데이터를 보호.
+-- 마이그레이션: migrations/lockdown_students_rls.sql 참조
+REVOKE ALL ON TABLE students FROM anon;
+REVOKE ALL ON TABLE students FROM authenticated;
 
 -- 상태값 설명:
 -- 'new': 신규 신청 (학부모가 방금 신청함)
@@ -309,20 +296,11 @@ CREATE INDEX IF NOT EXISTS idx_payments_cancelled_at ON payments(cancelled_at DE
 -- RLS 정책
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
--- 모든 사용자가 자신의 결제 조회 가능 (order_id로 조회)
-CREATE POLICY "Anyone can view payments by order_id" ON payments
-    FOR SELECT
-    USING (true);
-
--- 결제 생성은 누구나 가능 (결제 요청 시)
-CREATE POLICY "Anyone can insert payments" ON payments
-    FOR INSERT
-    WITH CHECK (true);
-
--- 결제 상태 업데이트는 누구나 가능 (웹훅/콜백에서 사용)
-CREATE POLICY "Anyone can update payments" ON payments
-    FOR UPDATE
-    USING (true);
+-- 운영 환경: 모든 CRUD는 서버 사이드 service role 클라이언트로만 수행.
+-- anon/authenticated 직접 접근을 차단하여 결제 데이터를 보호.
+-- 마이그레이션: migrations/lockdown_payments_rls.sql 참조
+REVOKE ALL ON TABLE payments FROM anon;
+REVOKE ALL ON TABLE payments FROM authenticated;
 
 -- 결제 상태값 설명:
 -- 'pending': 결제 대기 중 (결제 링크 생성됨)

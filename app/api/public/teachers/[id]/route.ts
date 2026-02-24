@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { getSupabasePublic } from '@/lib/supabase.public.server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -10,7 +10,7 @@ const cacheHeaders = {
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabasePublic();
     const teacherId = params.id;
 
     const { data: teacher, error: teacherError } = await supabase
