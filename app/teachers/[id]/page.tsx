@@ -136,7 +136,7 @@ export default function TeacherDetailPage() {
               {/* CTA */}
               <div className="mt-8">
                 <a
-                  href="/leveltest"
+                  href="https://www.allrounderenglish.co.kr/#consultation-form"
                   className="inline-block px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all shadow-lg shadow-violet-300/30"
                 >
                   {teacher.name} 선생님께 상담 신청하기
@@ -221,7 +221,7 @@ export default function TeacherDetailPage() {
             무료 상담을 통해 맞춤 학습 플랜을 받아보세요!
           </p>
           <a
-            href="/leveltest"
+            href="https://www.allrounderenglish.co.kr/#consultation-form"
             className="inline-block px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all shadow-lg shadow-violet-300/30"
           >
             무료 상담 신청하기

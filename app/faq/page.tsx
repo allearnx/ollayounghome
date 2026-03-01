@@ -214,7 +214,7 @@ export default function FAQPage() {
               전화 문의
             </a>
             <Link
-              href="/#consultation"
+              href="https://www.allrounderenglish.co.kr/#consultation-form"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium rounded-xl hover:from-violet-600 hover:to-purple-600 transition-colors shadow-lg shadow-violet-200"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
