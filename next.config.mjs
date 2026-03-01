@@ -32,17 +32,15 @@ const nextConfig = {
         destination: '/login',
         permanent: true,
       },
-    ];
-  },
-  async rewrites() {
-    return [
       {
         source: '/leveltest',
-        destination: 'https://aelt.vercel.app',
+        destination: 'https://leveltest.allrounderenglish.co.kr',
+        permanent: false,
       },
       {
         source: '/leveltest/:path*',
-        destination: 'https://aelt.vercel.app/:path*',
+        destination: 'https://leveltest.allrounderenglish.co.kr/:path*',
+        permanent: false,
       },
     ];
   },
