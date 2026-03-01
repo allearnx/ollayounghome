@@ -385,7 +385,7 @@ export default function SchedulePage() {
             상담을 통해 학생에게 맞는 시간대를 안내해드립니다.
           </p>
           <a
-            href="/#consultation-form"
+            href="/leveltest"
             className="inline-block px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all shadow-lg shadow-violet-300/30"
           >
             무료 상담 신청하기

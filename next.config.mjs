@@ -34,6 +34,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/leveltest',
+        destination: 'https://aelt.vercel.app',
+      },
+      {
+        source: '/leveltest/:path*',
+        destination: 'https://aelt.vercel.app/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
