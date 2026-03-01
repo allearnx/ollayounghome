@@ -580,6 +580,17 @@ export default function HomePage() {
                   </div>
                 )}
 
+                {/* 레벨테스트 안내 버튼 */}
+                <a
+                  href="/leveltest"
+                  className="block w-full py-4 text-center bg-white border-2 border-violet-300 text-violet-600 text-lg font-bold rounded-2xl hover:bg-violet-50 hover:border-violet-400 transition-all"
+                >
+                  레벨테스트 보기
+                </a>
+                <p className="mt-2 text-center text-sm text-slate-500">
+                  레벨테스트 먼저 보시면 더 정확한 상담이 가능하십니다
+                </p>
+
                 {/* 신청 버튼 */}
                 <button
                   type="submit"
