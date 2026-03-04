@@ -122,8 +122,23 @@ export default function PaymentWidget({
     setError(null);
 
     try {
-      // 결제 직전에 한 번 더 서버 값으로 재검증 (금액/상태 불일치 사고 방지)
+      // 결제 직전에 고객 정보(학생명, 연락처)를 DB에 저장
       setIsRefreshing(true);
+      const saveRes = await fetch('/api/payments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+        }),
+      });
+      if (!saveRes.ok) {
+        const saveErr = await saveRes.json();
+        throw new Error(saveErr?.error || '고객 정보를 저장할 수 없습니다.');
+      }
+
+      // 서버 값으로 재검증 (금액/상태 불일치 사고 방지)
       const res = await fetch(`/api/payments?orderId=${encodeURIComponent(orderId)}`);
       const latest = await res.json();
       if (!res.ok) {
