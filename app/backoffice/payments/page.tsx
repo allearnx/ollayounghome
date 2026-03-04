@@ -721,6 +721,7 @@ export default function PaymentsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제일</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">학생명</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">연락처</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">강좌명</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">구분</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제수단</th>
@@ -744,6 +745,15 @@ export default function PaymentsPage() {
                         {payment.type === 'PG' 
                           ? (payment.customer_name || payment.student?.student_name || '-')
                           : (payment.student?.student_name || '-')
+                        }
+                      </p>
+                    </td>
+                    {/* 연락처 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-slate-600">
+                        {payment.type === 'PG' 
+                          ? (payment.customer_phone || payment.student?.parent_phone || '-')
+                          : (payment.student?.parent_phone || '-')
                         }
                       </p>
                     </td>
