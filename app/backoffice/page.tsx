@@ -11,61 +11,105 @@ export default function AdminPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
-  const fetchStudents = useCallback(async () => {
-    setIsLoading(true);
+  const getAccessToken = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  };
+
+  const fetchStudents = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setIsLoading(true);
+    }
     try {
-      const [{ data, error }, { data: courseData, error: courseError }] = await Promise.all([
-        supabase
-        .from('students')
-        .select('*')
-        .eq('is_consultation', true)
-        .order('created_at', { ascending: false }),
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error('인증이 필요합니다.');
+      }
+
+      const [studentsRes, { data: courseData, error: courseError }] = await Promise.all([
+        fetch('/api/students', {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
         supabase
           .from('courses')
           .select('id, title')
           .order('created_at', { ascending: false }),
       ]);
 
-      if (error) throw error;
       if (courseError) throw courseError;
-      setStudents(data || []);
+      const studentsData = await studentsRes.json();
+      if (!studentsRes.ok) {
+        throw new Error(studentsData?.error || '학생 목록을 불러오지 못했습니다.');
+      }
+
+      const consultationStudents = (studentsData || []).filter(
+        (student: any) => student.is_consultation !== false
+      );
+
+      setStudents(consultationStudents);
       setCourses(courseData || []);
     } catch (err) {
       console.error('Error fetching students:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     fetchStudents();
+  }, [fetchStudents]);
 
-    // 실시간 구독 설정
-    const channel = supabase
-      .channel('students-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'students' },
-        () => {
-          fetchStudents();
-        }
-      )
-      .subscribe();
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      void fetchStudents({ silent: true });
+    }, 15000);
+
+    const refreshOnFocus = () => {
+      void fetchStudents({ silent: true });
+    };
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchStudents({ silent: true });
+      }
+    };
+
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnVisible);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', refreshOnFocus);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
     };
   }, [fetchStudents]);
 
   const updateStudent = async (id: string, field: 'status' | 'memo', value: string) => {
     setSavingId(id);
     try {
-      const { error } = await supabase
-        .from('students')
-        .update({ [field]: value })
-        .eq('id', id);
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error('인증이 필요합니다.');
+      }
 
-      if (error) throw error;
+      const res = await fetch(`/api/students/${id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || '저장 중 오류가 발생했습니다.');
+      }
 
       setStudents(prev =>
         prev.map(s => (s.id === id ? { ...s, [field]: value } : s))
@@ -157,7 +201,9 @@ export default function AdminPage() {
       {/* 새로고침 버튼 */}
       <div className="flex justify-end mb-4">
         <button
-          onClick={fetchStudents}
+          onClick={() => {
+            void fetchStudents();
+          }}
           disabled={isLoading}
           className="flex items-center gap-2 px-5 py-2.5 text-base font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-lg transition-all shadow-md shadow-violet-200 disabled:opacity-50"
         >

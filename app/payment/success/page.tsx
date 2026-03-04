@@ -10,6 +10,8 @@ interface PaymentResult {
   method?: string;
   approvedAt?: string;
   receiptUrl?: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 function SuccessContent() {
@@ -134,6 +136,18 @@ function SuccessContent() {
           <div className="bg-slate-50 rounded-xl p-4 mb-6">
             <h2 className="text-sm font-semibold text-slate-500 mb-3">결제 정보</h2>
             <div className="space-y-2">
+              {paymentResult.customerName && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">학생명</span>
+                  <span className="text-slate-800 font-medium">{paymentResult.customerName}</span>
+                </div>
+              )}
+              {paymentResult.customerPhone && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">연락처</span>
+                  <span className="text-slate-800">{paymentResult.customerPhone}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-slate-500">주문번호</span>
                 <span className="text-slate-800 font-mono text-sm">{paymentResult.orderId}</span>

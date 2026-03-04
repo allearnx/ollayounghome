@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
-
-function getTossSecretKey() {
-  return process.env.TOSS_SECRET_KEY!;
-}
+import { confirmTossPayment } from '@/lib/toss.server';
+import { updateStudentPaidIfExists } from '@/lib/paymentTransition.server';
 
 // POST: 결제 승인 요청
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseAdmin();
-    const TOSS_SECRET_KEY = getTossSecretKey();
     
     const body = await request.json();
     const { paymentKey, orderId, amount } = body;
@@ -52,27 +49,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. 토스페이먼츠 결제 승인 API 호출
-    const authHeader = Buffer.from(`${TOSS_SECRET_KEY}:`).toString('base64');
-    
-    const tossResponse = await fetch(
-      'https://api.tosspayments.com/v1/payments/confirm',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentKey,
-          orderId,
-          amount,
-        }),
-      }
-    );
+    const toss = await confirmTossPayment({ paymentKey, orderId, amount });
+    const tossData = toss.data;
 
-    const tossData = await tossResponse.json();
-
-    if (!tossResponse.ok) {
+    if (!toss.ok) {
       console.error('Toss API error:', tossData);
       
       // 결제 실패 상태로 업데이트
@@ -89,7 +69,7 @@ export async function POST(request: NextRequest) {
           error: tossData.message || '결제 승인에 실패했습니다.',
           code: tossData.code,
         },
-        { status: tossResponse.status }
+        { status: toss.status }
       );
     }
 
@@ -112,12 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. 학생 상태 업데이트 (결제 완료)
-    if (payment.student_id) {
-      await supabase
-        .from('students')
-        .update({ status: 'paid' })
-        .eq('id', payment.student_id);
-    }
+    if (payment.student_id) await updateStudentPaidIfExists(supabase, orderId);
 
     return NextResponse.json({
       success: true,
@@ -128,6 +103,8 @@ export async function POST(request: NextRequest) {
         method: tossData.method,
         approvedAt: tossData.approvedAt,
         receiptUrl: tossData.receipt?.url,
+        customerName: payment.customer_name,
+        customerPhone: payment.customer_phone,
       },
     });
   } catch (error) {

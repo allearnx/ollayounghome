@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
+import { inquireTossPayment } from '@/lib/toss.server';
 
 export const dynamic = 'force-dynamic';
-
-function getTossSecretKey() {
-  return process.env.TOSS_SECRET_KEY!;
-}
 
 // GET: 토스페이먼츠 결제 상세 조회 (관리자 전용)
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request);
-    const TOSS_SECRET_KEY = getTossSecretKey();
     const { searchParams } = new URL(request.url);
     const paymentKey = searchParams.get('paymentKey');
 
@@ -22,29 +18,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 토스페이먼츠 결제 조회 API 호출
-    const authHeader = Buffer.from(`${TOSS_SECRET_KEY}:`).toString('base64');
+    const toss = await inquireTossPayment(paymentKey);
+    const data = toss.data;
 
-    const response = await fetch(
-      `https://api.tosspayments.com/v1/payments/${paymentKey}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!toss.ok) {
       console.error('Toss inquiry error:', data);
       return NextResponse.json(
         {
           error: data.message || '결제 정보를 조회할 수 없습니다.',
           code: data.code,
         },
-        { status: response.status }
+        { status: toss.status }
       );
     }
 

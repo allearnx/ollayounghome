@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
 import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
-
-function getTossSecretKey() {
-  return process.env.TOSS_SECRET_KEY!;
-}
+import { cancelTossPayment } from '@/lib/toss.server';
+import { summarizeCancels } from '@/lib/paymentTransition.server';
 
 // POST: 결제 취소 (전액/부분)
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin(request);
     const supabase = getSupabaseAdmin();
-    const TOSS_SECRET_KEY = getTossSecretKey();
     
     const body = await request.json();
     const { paymentKey, cancelReason, cancelAmount, refundReceiveAccount } = body;
@@ -29,9 +26,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // 토스페이먼츠 결제 취소 API 호출
-    const authHeader = Buffer.from(`${TOSS_SECRET_KEY}:`).toString('base64');
 
     const cancelBody: Record<string, unknown> = {
       cancelReason,
@@ -51,28 +45,17 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const response = await fetch(
-      `https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(cancelBody),
-      }
-    );
+    const toss = await cancelTossPayment(paymentKey, cancelBody);
+    const data = toss.data;
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!toss.ok) {
       console.error('Toss cancel error:', data);
       return NextResponse.json(
         {
           error: data.message || '결제 취소에 실패했습니다.',
           code: data.code,
         },
-        { status: response.status }
+        { status: toss.status }
       );
     }
 
@@ -81,8 +64,7 @@ export async function POST(request: NextRequest) {
                       data.status === 'PARTIAL_CANCELED' ? 'paid' : 'cancelled';
 
     const cancels = Array.isArray(data.cancels) ? data.cancels : [];
-    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
-    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+    const { totalCancelledAmount, latestCancel } = summarizeCancels(cancels);
 
     const { error: updateError } = await supabase
       .from('payments')

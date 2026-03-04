@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
-import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
+import { AdminAuthError, requireStaffOrAdmin } from '@/lib/adminAuth.server';
 
 // PATCH: 학생 정보 업데이트 (상태, 메모)
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin(request);
+    await requireStaffOrAdmin(request);
     const supabase = getSupabaseAdmin();
     const { id } = params;
     const body = await request.json();
@@ -66,7 +66,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin(request);
+    await requireStaffOrAdmin(request);
     const supabase = getSupabaseAdmin();
     const { id } = params;
 
@@ -100,7 +100,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin(request);
+    await requireStaffOrAdmin(request);
     const supabase = getSupabaseAdmin();
     const { id } = params;
 

@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { supabase, FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
+import { FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
+import { adminFetch } from '@/lib/adminApi.client';
 
 export default function FAQsAdminPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -15,13 +16,10 @@ export default function FAQsAdminPage() {
   const fetchFAQs = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('faqs')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      setFaqs(data || []);
+      const response = await adminFetch('/api/admin/faqs', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'FAQ 목록을 불러오는데 실패했습니다.');
+      setFaqs(data.faqs || []);
     } catch (err) {
       console.error('Error fetching FAQs:', err);
     } finally {
@@ -36,12 +34,9 @@ export default function FAQsAdminPage() {
   // FAQ 삭제
   const deleteFAQ = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('faqs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const response = await adminFetch(`/api/admin/faqs/${id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '삭제에 실패했습니다.');
 
       setFaqs(prev => prev.filter(f => f.id !== id));
       setDeleteTarget(null);
@@ -54,12 +49,13 @@ export default function FAQsAdminPage() {
   // 노출 여부 토글
   const toggleVisibility = async (id: string, currentVisibility: boolean) => {
     try {
-      const { error } = await supabase
-        .from('faqs')
-        .update({ is_visible: !currentVisibility })
-        .eq('id', id);
-
-      if (error) throw error;
+      const response = await adminFetch(`/api/admin/faqs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_visible: !currentVisibility }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '상태 변경에 실패했습니다.');
 
       setFaqs(prev =>
         prev.map(f => (f.id === id ? { ...f, is_visible: !currentVisibility } : f))

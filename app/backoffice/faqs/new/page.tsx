@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
+import { FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
+import { adminFetch } from '@/lib/adminApi.client';
 
 export default function NewFAQPage() {
   const router = useRouter();
@@ -31,17 +32,18 @@ export default function NewFAQPage() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('faqs')
-        .insert({
+      const response = await adminFetch('/api/admin/faqs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           question: question.trim(),
           answer: answer.trim(),
           category,
-          display_order: displayOrder,
-          is_visible: true,
-        });
-
-      if (error) throw error;
+          display_order: displayOrder
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '등록에 실패했습니다.');
 
       alert('FAQ가 등록되었습니다!');
       router.push('/backoffice/faqs');

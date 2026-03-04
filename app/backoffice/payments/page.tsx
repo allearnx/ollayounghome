@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApi.client';
 
 // 통합 결제 타입 (PG + 수동)
 interface IntegratedPayment {
@@ -170,27 +170,13 @@ export default function PaymentsPage() {
     setIsLoading(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        setPayments([]);
-        setStudents([]);
-        setCourses([]);
-        setIsLoading(false);
-        return;
-      }
-
       // 통합 결제 내역과 학생/강좌 목록을 병렬로 조회
       const [paymentsRes, overviewRes] = await Promise.all([
-        fetch('/api/admin/integrated-payments?limit=100', {
+        adminFetch('/api/admin/integrated-payments?limit=100', {
           cache: 'no-store',
-          headers: { Authorization: `Bearer ${session.access_token}` },
         }),
-        fetch('/api/admin/overview?limit=50', {
+        adminFetch('/api/admin/overview?limit=50', {
           cache: 'no-store',
-          headers: { Authorization: `Bearer ${session.access_token}` },
         }),
       ]);
 
@@ -345,20 +331,11 @@ export default function PaymentsPage() {
     setIsCreatingManualPayment(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        throw new Error('인증이 필요합니다.');
-      }
-
       // 수기 결제 생성 (신규 학생은 student_name, parent_phone 직접 전달)
-      const response = await fetch('/api/manual-payments', {
+      const response = await adminFetch('/api/manual-payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           // 기존 학생 선택 시 student_id, 신규 학생은 student_name/parent_phone 직접 전달
@@ -430,7 +407,7 @@ export default function PaymentsPage() {
     setIsLoadingDetail(true);
 
     try {
-      const response = await fetch(`/api/payments/inquiry?paymentKey=${payment.payment_key}`);
+      const response = await adminFetch(`/api/payments/inquiry?paymentKey=${payment.payment_key}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -491,17 +468,9 @@ export default function PaymentsPage() {
     setIsProcessingRefund(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('관리자 인증이 필요합니다.');
-      }
-
-      const response = await fetch('/api/payments/cancel', {
+      const response = await adminFetch('/api/payments/cancel', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -546,23 +515,13 @@ export default function PaymentsPage() {
     setIsDeleting(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('관리자 인증이 필요합니다.');
-      }
-
       // PG 결제 vs 수동 결제 구분하여 다른 API 호출
       const endpoint = deletePayment.type === 'PG'
         ? `/api/payments/${deletePayment.id}`
         : `/api/manual-payments/${deletePayment.id}`;
 
-      const response = await fetch(endpoint, {
+      const response = await adminFetch(endpoint, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
       });
 
       const data = await response.json();

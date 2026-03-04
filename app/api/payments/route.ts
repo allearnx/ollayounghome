@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
-import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
+import { requireAdmin } from '@/lib/adminAuth.server';
 
 import { randomUUID } from 'crypto';
 
@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
       if (isAdmin && amount && amount > 0) {
         finalAmount = amount;
       }
+    }
+
+    // 공개 주문 생성은 반드시 course 기반으로만 허용
+    if (!isAdmin && !finalCourseId) {
+      return NextResponse.json(
+        { error: '공개 결제 요청은 강좌 선택이 필요합니다.' },
+        { status: 400 }
+      );
     }
 
     if (!finalAmount || finalAmount <= 0) {

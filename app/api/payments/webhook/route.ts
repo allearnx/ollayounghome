@@ -2,25 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
 import { logTossWebhookError, logTossWebhookReceived, logTossWebhookResult } from '@/lib/webhookLog';
-
-function getTossSecretKey() {
-  return process.env.TOSS_SECRET_KEY!;
-}
-
-async function fetchTossPayment(paymentKey: string) {
-  const secretKey = getTossSecretKey();
-  const authHeader = Buffer.from(`${secretKey}:`).toString('base64');
-
-  const res = await fetch(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Basic ${authHeader}`,
-    },
-  });
-
-  const data = await res.json();
-  return { ok: res.ok, status: res.status, data };
-}
+import { inquireTossPayment } from '@/lib/toss.server';
+import {
+  canTransitionPaymentStatus,
+  mapTossToPaymentStatus,
+  summarizeCancels,
+  updateStudentPaidIfExists,
+} from '@/lib/paymentTransition.server';
 
 // POST: 토스페이먼츠 웹훅 수신
 export async function POST(request: NextRequest) {
@@ -38,7 +26,7 @@ export async function POST(request: NextRequest) {
     // 운영 보안: webhook payload를 그대로 신뢰하지 않고 토스에 재조회하여 검증
     // (서명 검증을 사용할 수 있으면 더 좋지만, 최소한 paymentKey/orderId 일치 검증을 한다)
     if (data?.paymentKey) {
-      const verified = await fetchTossPayment(data.paymentKey);
+      const verified = await inquireTossPayment(data.paymentKey);
       if (!verified.ok) {
         logTossWebhookResult(body, 'verify_failed', { tossStatus: verified.status });
         // 토스 재조회가 실패하면 일시 장애일 수 있으니 재전송을 유도한다.
@@ -102,22 +90,7 @@ async function handlePaymentStatusChanged(
 ) {
   const { orderId, status, paymentKey } = data;
 
-  // 상태 매핑
-  let dbStatus: string;
-  switch (status) {
-    case 'DONE':
-      dbStatus = 'paid';
-      break;
-    case 'CANCELED':
-      dbStatus = 'cancelled';
-      break;
-    case 'ABORTED':
-    case 'EXPIRED':
-      dbStatus = 'failed';
-      break;
-    default:
-      dbStatus = 'pending';
-  }
+  const dbStatus = mapTossToPaymentStatus(status);
 
   // idempotency / transition rules:
   // - paid는 "취소"로 바뀔 수 있으므로 terminal로 취급하면 안 됨 (paid -> cancelled 허용)
@@ -133,12 +106,8 @@ async function handlePaymentStatusChanged(
       console.log(`Skip webhook update (no change): ${orderId} stays ${existingStatus}`);
       return;
     }
-    if (['cancelled', 'failed'].includes(existingStatus)) {
+    if (!canTransitionPaymentStatus(existingStatus as any, dbStatus as any)) {
       console.log(`Skip webhook update (already terminal): ${orderId} -> ${existingStatus}`);
-      return;
-    }
-    if (existingStatus === 'paid' && dbStatus === 'pending') {
-      console.log(`Skip webhook update (invalid transition): ${orderId} paid -> pending`);
       return;
     }
   }
@@ -158,9 +127,7 @@ async function handlePaymentStatusChanged(
   }
 
   if (dbStatus === 'cancelled') {
-    const cancels = Array.isArray(verifiedPayment?.cancels) ? verifiedPayment.cancels : [];
-    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
-    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+    const { totalCancelledAmount, latestCancel } = summarizeCancels(verifiedPayment?.cancels);
     updateData.cancelled_at = latestCancel?.canceledAt ?? new Date().toISOString();
     updateData.cancelled_amount = totalCancelledAmount || null;
   }
@@ -191,18 +158,7 @@ async function handlePaymentStatusChanged(
 
   // 학생 상태도 업데이트
   if (dbStatus === 'paid') {
-    const { data: payment } = await supabase
-      .from('payments')
-      .select('student_id')
-      .eq('order_id', orderId)
-      .single();
-
-    if (payment?.student_id) {
-      await supabase
-        .from('students')
-        .update({ status: 'paid' })
-        .eq('id', payment.student_id);
-    }
+    await updateStudentPaidIfExists(supabase, orderId);
   }
 
   console.log(`Payment ${orderId} status updated to ${dbStatus}`);
@@ -268,9 +224,7 @@ async function handleCancelStatusChanged(
   const { orderId, cancelStatus } = data;
 
   if (cancelStatus === 'DONE') {
-    const cancels = Array.isArray(verifiedPayment?.cancels) ? verifiedPayment.cancels : [];
-    const totalCancelledAmount = cancels.reduce((sum: number, c: any) => sum + (Number(c?.cancelAmount) || 0), 0);
-    const latestCancel = cancels.length ? cancels[cancels.length - 1] : null;
+    const { totalCancelledAmount, latestCancel } = summarizeCancels(verifiedPayment?.cancels);
 
     const { error } = await supabase
       .from('payments')

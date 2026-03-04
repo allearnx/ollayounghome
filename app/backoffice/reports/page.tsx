@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { supabase, CATEGORY_LABELS } from '@/lib/supabase';
+import { CATEGORY_LABELS } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApi.client';
 
 export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -119,14 +120,7 @@ export default function ReportsPage() {
     setIsLoading(true);
     setError('');
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
-
-      const res = await fetch('/api/admin/reports', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await adminFetch('/api/admin/reports');
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || '매출 리포트를 불러올 수 없습니다.');
       setReport(data);
@@ -140,13 +134,7 @@ export default function ReportsPage() {
 
   const fetchExpenses = async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
-
-      const res = await fetch('/api/admin/teacher-expenses?limit=200', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+      const res = await adminFetch('/api/admin/teacher-expenses?limit=200', {
         cache: 'no-store',
       });
       const data = await res.json();
@@ -200,11 +188,6 @@ export default function ReportsPage() {
 
     setIsSavingExpense(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
-
       const payload = {
         expense_date: expenseForm.expense_date,
         teacher_name: expenseForm.teacher_name.trim(),
@@ -222,11 +205,10 @@ export default function ReportsPage() {
         ? `/api/admin/teacher-expenses/${editingExpenseId}`
         : '/api/admin/teacher-expenses';
       const method = editingExpenseId ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -296,14 +278,8 @@ export default function ReportsPage() {
   const deleteExpense = async (id: string) => {
     if (!confirm('강사료 내역을 삭제할까요?')) return;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('관리자 인증이 필요합니다.');
-
-      const res = await fetch(`/api/admin/teacher-expenses/${id}`, {
+      const res = await adminFetch(`/api/admin/teacher-expenses/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || '강사료 삭제에 실패했습니다.');

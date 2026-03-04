@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
-import { AdminAuthError, requireAdmin } from '@/lib/adminAuth.server';
+import { AdminAuthError, requireStaffOrAdmin } from '@/lib/adminAuth.server';
 
 // GET: 모든 학생 목록 조회
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin(request);
+    await requireStaffOrAdmin(request);
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('students')

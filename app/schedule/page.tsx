@@ -47,8 +47,8 @@ const scheduleData: Record<string, Record<string, ScheduleCell>> = {
     '수': { classes: [] },
     '목': { classes: [] },
     '토': { classes: [
-      { name: '해커스', subName: '중학영문법 1학년', time: '8:40-9:50', teacher: '유혜령 T', type: 'hackers' },
-      { name: '리딩 4.0 해외반', time: '9:00-10:20', teacher: 'Jean T', isNew: true, tags: ['국제학교', '리딩'], type: 'reading' },
+      { name: '천일문', subName: '기본', time: '8:40-9:50', teacher: '유혜령 T', type: 'hackers' },
+      { name: '리딩 4.0 해외반', time: '9:00-10:20', teacher: '안홍미 T', isNew: true, tags: ['국제학교', '리딩'], type: 'reading' },
       { name: '구해영', subName: '중학영문법 Level 1', time: '9:00-10:20', teacher: '이다은 T', isNew: true, type: 'guhaeyoung' },
     ]},
     '일': { classes: [] },
@@ -80,9 +80,7 @@ const scheduleData: Record<string, Record<string, ScheduleCell>> = {
     '수': { classes: [
       { name: '구해영', subName: '중학영문법 Level 0', time: '6:30-7:50', teacher: '', isNew: true, type: 'guhaeyoung' },
     ]},
-    '목': { classes: [
-      { name: '해커스', subName: '중학영문법 2학년', time: '5:30-6:50', teacher: 'Jean T', type: 'hackers' },
-    ]},
+    '목': { classes: [] },
     '토': { classes: [] },
     '일': { classes: [] },
   },
@@ -95,7 +93,7 @@ const scheduleData: Record<string, Record<string, ScheduleCell>> = {
       { name: '중학 영문법', subName: '3800제 3학년', time: '7:00-8:00', teacher: '안홍미 T', isNew: true, type: 'grammar' },
     ]},
     '목': { classes: [
-      { name: '리딩 4.0 국내 A반', time: '7:00-8:20', teacher: 'Jean T', isNew: true, tags: ['리딩'], type: 'reading' },
+      { name: '리딩 4.0 국내 A반', time: '7:00-8:20', teacher: '안홍미 T', isNew: true, tags: ['리딩'], type: 'reading' },
     ]},
     '토': { classes: [] },
     '일': { classes: [

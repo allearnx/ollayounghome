@@ -9,7 +9,17 @@ export class AdminAuthError extends Error {
   }
 }
 
-export async function requireAdmin(request: NextRequest): Promise<{ userId: string; email?: string }> {
+export type AccessRole = 'staff' | 'admin';
+
+export function hasRequiredRole(userRole: AccessRole, requiredRole: AccessRole) {
+  if (userRole === 'admin') return true;
+  return userRole === requiredRole;
+}
+
+async function requireRole(
+  request: NextRequest,
+  requiredRole: AccessRole
+): Promise<{ userId: string; email?: string; role: AccessRole }> {
   const header = request.headers.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
   if (!token) {
@@ -35,10 +45,22 @@ export async function requireAdmin(request: NextRequest): Promise<{ userId: stri
     throw new AdminAuthError('권한 정보를 찾을 수 없습니다.', 403);
   }
 
-  if (profile.role !== 'admin') {
-    throw new AdminAuthError('관리자 권한이 필요합니다.', 403);
+  const role = profile.role as AccessRole;
+  if (!hasRequiredRole(role, requiredRole)) {
+    throw new AdminAuthError(
+      requiredRole === 'admin' ? '관리자 권한이 필요합니다.' : '스태프 권한이 필요합니다.',
+      403
+    );
   }
 
-  return { userId: user.id, email: user.email };
+  return { userId: user.id, email: user.email, role };
+}
+
+export async function requireAdmin(request: NextRequest) {
+  return requireRole(request, 'admin');
+}
+
+export async function requireStaffOrAdmin(request: NextRequest) {
+  return requireRole(request, 'staff');
 }
 
