@@ -24,9 +24,9 @@ export async function activateVoca(params: {
   orderId: string;
 }): Promise<void> {
   const { name, email, phone, orderId } = params;
-  const supabase = getAllGrammarSupabaseAdmin();
 
   try {
+    const supabase = getAllGrammarSupabaseAdmin();
     let userId: string;
 
     // 1. Supabase Auth에 계정 생성 (이미 있으면 기존 계정 사용)
