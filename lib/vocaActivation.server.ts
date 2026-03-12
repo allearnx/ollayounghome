@@ -62,8 +62,7 @@ export async function activateVoca(params: {
       {
         id: userId,
         email,
-        name,
-        phone,
+        full_name: name,
         role: 'student',
         is_active: true,
       },
