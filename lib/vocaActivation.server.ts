@@ -91,7 +91,6 @@ export async function activateVoca(params: {
       student_id: userId,
       service: 'voca',
       assigned_by: userId,
-      source: 'subscription',
       is_active: true,
     });
 
