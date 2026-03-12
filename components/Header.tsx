@@ -24,7 +24,6 @@ const menuItems = [
       { label: '문법', href: '/courses/grammar' },
       { label: '내신', href: '/courses/school_exam' },
       { label: '국제학교/유학생', href: '/courses/international' },
-      { label: '올톡보카', href: '/courses/voca' },
       { label: '리딩', href: '/courses/reading' },
     ]
   },
@@ -132,10 +131,19 @@ export default function Header() {
                 )}
               </div>
             ))}
+            {/* 올킬보카 강조 버튼 */}
+            <a
+              href="/allkill"
+              className="ml-2 relative px-5 py-2.5 text-sm font-bold text-white rounded-full transition-all duration-200 shadow-lg hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #4DD9C0 100%)', boxShadow: '0 4px 20px rgba(167,139,250,0.4)' }}
+            >
+              <span className="absolute -top-2 -right-1 bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+              ✦ 올킬보카
+            </a>
             {/* 레벨테스트 버튼 */}
             <a
               href="/leveltest"
-              className="ml-4 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all duration-200 shadow-lg shadow-violet-300/30"
+              className="ml-2 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all duration-200 shadow-lg shadow-violet-300/30"
             >
               레벨테스트
             </a>
@@ -221,6 +229,16 @@ export default function Header() {
               )}
             </div>
           ))}
+          {/* 올킬보카 강조 버튼 (모바일) */}
+          <a
+            href="/allkill"
+            className="relative block mt-3 px-4 py-3 text-base font-bold text-white text-center rounded-full transition-all hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #4DD9C0 100%)', boxShadow: '0 4px 20px rgba(167,139,250,0.4)' }}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full leading-none whitespace-nowrap">NEW</span>
+            ✦ 올킬보카
+          </a>
           {/* 레벨테스트 버튼 */}
           <a
             href="/leveltest"
