@@ -7,19 +7,25 @@ import PaymentWidget from '@/components/PaymentWidget';
 const ALLKILL_COURSE_ID = '5ff21cf6-1fce-4a4e-b674-d4f099ee3368';
 
 export default function AllkillPayButton() {
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
 
-  const handleSubmit = async () => {
+  const closeModal = () => {
+    setShowModal(false);
+    setOrderId(null);
+    setCustomerName('');
+    setCustomerPhone('');
+    setError(null);
+  };
+
+  const handleCreateOrder = async () => {
     setError(null);
     if (!customerName.trim()) { setError('이름을 입력해주세요.'); return; }
     if (!customerPhone.trim()) { setError('연락처를 입력해주세요.'); return; }
-    if (!ALLKILL_COURSE_ID) { setError('준비 중입니다. 곧 오픈돼요!'); return; }
 
     setIsCreatingOrder(true);
     try {
@@ -35,7 +41,6 @@ export default function AllkillPayButton() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '주문 생성에 실패했습니다.');
       setOrderId(data.orderId);
-      setShowPayment(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : '오류가 발생했습니다.');
     } finally {
@@ -43,19 +48,10 @@ export default function AllkillPayButton() {
     }
   };
 
-  const reset = () => {
-    setShowForm(false);
-    setShowPayment(false);
-    setOrderId(null);
-    setCustomerName('');
-    setCustomerPhone('');
-    setError(null);
-  };
-
   return (
     <>
       <button
-        onClick={() => setShowForm(true)}
+        onClick={() => setShowModal(true)}
         style={{
           width: '100%', padding: 16, borderRadius: 12, border: 'none',
           cursor: 'pointer', fontFamily: 'inherit', fontSize: 16, fontWeight: 700,
@@ -69,81 +65,91 @@ export default function AllkillPayButton() {
         지금 시작하기 →
       </button>
 
-      {/* 고객 정보 입력 모달 */}
-      {showForm && !showPayment && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
-          onClick={(e) => { if (e.target === e.currentTarget) reset(); }}
-        >
-          <div style={{ background: 'white', borderRadius: 24, padding: '40px 36px', width: '100%', maxWidth: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ fontSize: 22, fontWeight: 900, color: '#2D2760', marginBottom: 6 }}>올킬보카 시작하기</h3>
-            <p style={{ fontSize: 14, color: '#9E97C8', marginBottom: 28, lineHeight: 1.6 }}>정보를 입력하면 결제창으로 이동해요.</p>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 배경 */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#5C5490', marginBottom: 6 }}>이름</label>
-              <input
-                type="text"
-                placeholder="홍길동"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1.5px solid #E5E2FF', fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#A78BFA'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#E5E2FF'; }}
-              />
+          {/* 모달 */}
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+            {/* 헤더 */}
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-xl font-bold text-slate-800">올킬보카 시작하기</h3>
+              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#5C5490', marginBottom: 6 }}>연락처</label>
-              <input
-                type="tel"
-                placeholder="010-0000-0000"
-                value={customerPhone}
-                onChange={e => setCustomerPhone(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1.5px solid #E5E2FF', fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#A78BFA'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#E5E2FF'; }}
-              />
-            </div>
-
-            {error && (
-              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>
-                {error}
+            {/* 바디 */}
+            <div className="p-6">
+              {/* 상품 정보 */}
+              <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+                <p className="text-sm text-slate-500 mb-1">결제 상품</p>
+                <p className="text-lg font-bold text-slate-800">올킬보카 월 구독</p>
+                <p className="text-sm text-violet-600 font-semibold mt-1">월 9,900원 (얼리버드 특가)</p>
               </div>
-            )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={isCreatingOrder}
-              style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', cursor: isCreatingOrder ? 'not-allowed' : 'pointer', fontFamily: 'inherit', fontSize: 16, fontWeight: 700, background: isCreatingOrder ? '#C4B5FD' : '#A78BFA', color: 'white', marginBottom: 10 }}
-            >
-              {isCreatingOrder ? '처리 중...' : '결제하기 →'}
-            </button>
-            <button
-              onClick={reset}
-              style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #E5E2FF', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, background: 'transparent', color: '#9E97C8' }}
-            >
-              취소
-            </button>
-          </div>
-        </div>
-      )}
+              {/* 고객 정보 입력 (주문 생성 전) */}
+              {!orderId && (
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      이름 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                      placeholder="홍길동"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      연락처 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={e => setCustomerPhone(e.target.value)}
+                      placeholder="010-0000-0000"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                    />
+                  </div>
 
-      {/* 결제 위젯 모달 */}
-      {showPayment && orderId && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-          <div style={{ background: 'white', borderRadius: 24, padding: 32, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#2D2760' }}>결제</h3>
-              <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#9E97C8' }}>✕</button>
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleCreateOrder}
+                    disabled={isCreatingOrder}
+                    className="w-full py-4 rounded-xl font-semibold text-white text-lg bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isCreatingOrder ? '처리 중...' : '9,900원 결제 진행'}
+                  </button>
+                </div>
+              )}
+
+              {/* 결제 위젯 (주문 생성 후) */}
+              {orderId && (
+                <PaymentWidget
+                  amount={9900}
+                  orderName="올킬보카 월 구독"
+                  orderId={orderId}
+                  customerName={customerName}
+                  customerPhone={customerPhone}
+                  onFail={(code, msg) => {
+                    setError(`결제 실패: ${msg}`);
+                    setOrderId(null);
+                  }}
+                />
+              )}
             </div>
-            <PaymentWidget
-              orderId={orderId}
-              amount={9900}
-              orderName="올킬보카 월 구독"
-              customerName={customerName}
-              customerPhone={customerPhone}
-              onFail={(code, msg) => { setError(`결제 실패: ${msg}`); setShowPayment(false); }}
-            />
           </div>
         </div>
       )}
