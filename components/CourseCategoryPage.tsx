@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import { Course, Teacher, CATEGORY_LABELS, CourseCategory } from '@/lib/domain';
 import { CATEGORY_PAGE_CONFIG } from '@/lib/courseCategoryConfig';
+import { formatPrice } from '@/lib/utils';
 
 interface CourseWithTeacher extends Course {
   teachers: Teacher | null;
@@ -31,7 +32,6 @@ export default function CourseCategoryPage({ category }: { category: CourseCateg
     fetchCourses();
   }, [category]);
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('ko-KR').format(price);
 
   return (
     <main className="min-h-screen bg-white">

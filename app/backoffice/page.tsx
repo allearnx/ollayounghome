@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase, Student, STATUS_LABELS, getGradeShortLabel } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
+import { formatDateTimeShort } from '@/lib/utils';
 
 export default function AdminPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -156,15 +157,6 @@ export default function AdminPage() {
     return titles.length ? titles.join(', ') : '-';
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
 
   const getStatusColor = (status: Student['status']) => {
     switch (status) {
@@ -318,7 +310,7 @@ export default function AdminPage() {
                       {getInterestCourses((student as any).interest_course_ids)}
                     </td>
                     <td className="py-4 px-5 text-sm text-slate-500 font-mono">
-                      {formatDate(student.created_at)}
+                      {formatDateTimeShort(student.created_at)}
                     </td>
                     <td className="py-4 px-5">
                       <select

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { formatPrice, formatDateTimeLong } from '@/lib/utils';
 
 interface PaymentResult {
   orderId: string;
@@ -61,19 +62,6 @@ function SuccessContent() {
     confirmPayment();
   }, [searchParams]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   if (isLoading) {
     return (
@@ -165,7 +153,7 @@ function SuccessContent() {
               {paymentResult.approvedAt && (
                 <div className="flex justify-between">
                   <span className="text-slate-500">결제일시</span>
-                  <span className="text-slate-800 text-sm">{formatDate(paymentResult.approvedAt)}</span>
+                  <span className="text-slate-800 text-sm">{formatDateTimeLong(paymentResult.approvedAt)}</span>
                 </div>
               )}
             </div>

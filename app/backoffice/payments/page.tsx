@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { adminFetch } from '@/lib/adminApi.client';
+import { formatPrice, formatDateTime } from '@/lib/utils';
 
 // 통합 결제 타입 (PG + 수동)
 interface IntegratedPayment {
@@ -578,20 +579,6 @@ export default function PaymentsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
-
   return (
     <AdminLayout requiredRole="admin">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -738,7 +725,7 @@ export default function PaymentsPage() {
                     {/* 결제일 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <p className="text-sm text-slate-600">
-                        {payment.paid_at ? formatDate(payment.paid_at) : formatDate(payment.created_at)}
+                        {payment.paid_at ? formatDateTime(payment.paid_at) : formatDateTime(payment.created_at)}
                       </p>
                     </td>
                     {/* 학생명 */}
@@ -1199,7 +1186,7 @@ export default function PaymentsPage() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-slate-500">취소일시</span>
-                              <span className="text-slate-800 text-sm">{formatDate(cancel.canceledAt)}</span>
+                              <span className="text-slate-800 text-sm">{formatDateTime(cancel.canceledAt)}</span>
                             </div>
                           </div>
                         ))}
@@ -1213,12 +1200,12 @@ export default function PaymentsPage() {
                     <div className="bg-slate-50 rounded-xl p-4 space-y-2">
                       <div className="flex justify-between">
                         <span className="text-slate-500">요청일시</span>
-                        <span className="text-slate-800 text-sm">{formatDate(paymentDetail.requestedAt)}</span>
+                        <span className="text-slate-800 text-sm">{formatDateTime(paymentDetail.requestedAt)}</span>
                       </div>
                       {paymentDetail.approvedAt && (
                         <div className="flex justify-between">
                           <span className="text-slate-500">승인일시</span>
-                          <span className="text-slate-800 text-sm">{formatDate(paymentDetail.approvedAt)}</span>
+                          <span className="text-slate-800 text-sm">{formatDateTime(paymentDetail.approvedAt)}</span>
                         </div>
                       )}
                     </div>

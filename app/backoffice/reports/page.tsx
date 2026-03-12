@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { CATEGORY_LABELS } from '@/lib/supabase';
 import { adminFetch } from '@/lib/adminApi.client';
+import { formatKRW } from '@/lib/utils';
 
 export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +66,6 @@ export default function ReportsPage() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
 
-  const formatKRW = (n: number) => `₩${new Intl.NumberFormat('ko-KR').format(n)}`;
   const parseNumber = (value: string) => {
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { Teacher, Course, CATEGORY_LABELS } from '@/lib/domain';
+import { formatPrice } from '@/lib/utils';
 
 export default function TeacherDetailPage() {
   const params = useParams();
@@ -35,9 +36,6 @@ export default function TeacherDetailPage() {
     }
   }, [teacherId]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {

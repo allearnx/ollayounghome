@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { Course, Teacher, CATEGORY_LABELS } from '@/lib/domain';
 import PaymentWidget from '@/components/PaymentWidget';
+import { formatPrice } from '@/lib/utils';
 
 interface CourseWithTeacher extends Course {
   teachers: Teacher | null;
@@ -48,9 +49,6 @@ export default function CourseDetailPage() {
     }
   }, [courseId]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase, Course, Teacher, CATEGORY_LABELS, CourseCategory } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
+import { formatPrice } from '@/lib/utils';
 
 interface CourseWithTeacher extends Course {
   teachers: Teacher | null;
@@ -59,9 +60,6 @@ export default function CoursesPage() {
   };
 
   // 가격 포맷
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
 
   // 카테고리 색상
   const getCategoryColor = (category: CourseCategory) => {
