@@ -4,7 +4,7 @@ import { useState } from 'react';
 import PaymentWidget from '@/components/PaymentWidget';
 
 // 올킬보카 DB 등록 후 여기에 courseId 입력
-const ALLKILL_COURSE_ID = '';
+const ALLKILL_COURSE_ID = '5ff21cf6-1fce-4a4e-b674-d4f099ee3368';
 
 export default function AllkillPayButton() {
   const [showForm, setShowForm] = useState(false);
