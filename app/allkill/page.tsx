@@ -189,31 +189,6 @@ export default function AllkillPage() {
               이제는 그만.
             </p>
 
-            {/* 신뢰 지표 */}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
-              {['🎁 1주 무료 체험', '✓ 언제든 취소 가능', '⚡ 얼리버드 특가 9,900원'].map((badge) => (
-                <span key={badge} style={{ background: C.lavenderLight, color: C.gray600, border: `1px solid rgba(167,139,250,0.25)`, fontSize: 14, fontWeight: 600, padding: '7px 16px', borderRadius: 100 }}>{badge}</span>
-              ))}
-            </div>
-
-            {/* Hero CTA */}
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="#price" style={{ display: 'inline-block', background: '#A78BFA', color: 'white', fontSize: 17, fontWeight: 700, padding: '16px 40px', borderRadius: 12, textDecoration: 'none', boxShadow: '0 8px 28px rgba(167,139,250,0.4)', letterSpacing: '-0.2px' }}>
-                지금 시작하기 →
-              </a>
-              <a href="#why" style={{ display: 'inline-block', background: 'transparent', color: C.gray600, fontSize: 17, fontWeight: 600, padding: '16px 32px', borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(167,139,250,0.35)' }}>
-                자세히 알아보기
-              </a>
-            </div>
-
-            {/* 스크롤 인디케이터 */}
-            <div style={{ marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.35 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.gray600, letterSpacing: '0.5px' }}>SCROLL</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: C.gray600 }}>
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-
           </div>
         </section>
 
