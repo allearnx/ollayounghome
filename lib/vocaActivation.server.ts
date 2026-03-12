@@ -1,7 +1,19 @@
-import { getSupabaseAdmin } from '@/lib/supabase.server';
+import { createClient } from '@supabase/supabase-js';
+
+function getAllGrammarSupabaseAdmin() {
+  const url = process.env.ALLGRAMMAR_SUPABASE_URL;
+  const key = process.env.ALLGRAMMAR_SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error('ALLGRAMMAR_SUPABASE_URL 또는 ALLGRAMMAR_SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다.');
+  }
+  return createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 /**
  * 올킬보카 결제 완료 후 계정 생성 및 서비스 활성화
+ * - AllGrammar Supabase에 연결 (홈페이지 Supabase와 별개)
  * - 에러 발생 시 결제는 취소하지 않고 로그만 기록
  * - 이미 동일 이메일 계정이 있으면 서비스 활성화만 진행
  */
@@ -12,7 +24,7 @@ export async function activateVoca(params: {
   orderId: string;
 }): Promise<void> {
   const { name, email, phone, orderId } = params;
-  const supabase = getSupabaseAdmin();
+  const supabase = getAllGrammarSupabaseAdmin();
 
   try {
     let userId: string;
