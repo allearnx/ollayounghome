@@ -32,7 +32,7 @@ export async function activateVoca(params: {
     // 1. Supabase Auth에 계정 생성 (이미 있으면 기존 계정 사용)
     const { data: authData, error: createError } = await supabase.auth.admin.createUser({
       email,
-      password: phone,
+      password: phone.replace(/\D/g, ''), // 하이픈 제거, 숫자만 (010-xxxx-xxxx → 01012345678)
       email_confirm: true,
       user_metadata: { name, phone },
     });
