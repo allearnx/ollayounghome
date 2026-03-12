@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
 import { confirmTossPayment } from '@/lib/toss.server';
 import { updateStudentPaidIfExists } from '@/lib/paymentTransition.server';
+import { activateVoca } from '@/lib/vocaActivation.server';
+
+const ALLKILL_COURSE_ID = '5ff21cf6-1fce-4a4e-b674-d4f099ee3368';
 
 // POST: 결제 승인 요청
 export async function POST(request: NextRequest) {
@@ -93,6 +96,16 @@ export async function POST(request: NextRequest) {
 
     // 4. 학생 상태 업데이트 (결제 완료)
     if (payment.student_id) await updateStudentPaidIfExists(supabase, orderId);
+
+    // 5. 올킬보카 결제 시 계정 자동 생성 및 서비스 활성화
+    if (payment.course_id === ALLKILL_COURSE_ID && payment.customer_email) {
+      await activateVoca({
+        name: payment.customer_name || '',
+        email: payment.customer_email,
+        phone: payment.customer_phone || '',
+        orderId,
+      });
+    }
 
     return NextResponse.json({
       success: true,

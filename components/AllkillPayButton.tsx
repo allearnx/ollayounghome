@@ -10,6 +10,7 @@ export default function AllkillPayButton() {
   const [showModal, setShowModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -19,6 +20,7 @@ export default function AllkillPayButton() {
     setOrderId(null);
     setCustomerName('');
     setCustomerPhone('');
+    setCustomerEmail('');
     setError(null);
   };
 
@@ -26,6 +28,8 @@ export default function AllkillPayButton() {
     setError(null);
     if (!customerName.trim()) { setError('이름을 입력해주세요.'); return; }
     if (!customerPhone.trim()) { setError('연락처를 입력해주세요.'); return; }
+    if (!customerEmail.trim()) { setError('이메일을 입력해주세요.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) { setError('올바른 이메일 형식으로 입력해주세요.'); return; }
 
     setIsCreatingOrder(true);
     try {
@@ -36,6 +40,7 @@ export default function AllkillPayButton() {
           courseId: ALLKILL_COURSE_ID,
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
+          customerEmail: customerEmail.trim(),
         }),
       });
       const data = await res.json();
@@ -118,6 +123,19 @@ export default function AllkillPayButton() {
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      이메일 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={e => setCustomerEmail(e.target.value)}
+                      placeholder="example@email.com"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">이메일이 올킬보카 로그인 아이디가 됩니다.</p>
+                  </div>
 
                   {error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
@@ -143,6 +161,7 @@ export default function AllkillPayButton() {
                   orderId={orderId}
                   customerName={customerName}
                   customerPhone={customerPhone}
+                  customerEmail={customerEmail}
                   onFail={(code, msg) => {
                     setError(`결제 실패: ${msg}`);
                     setOrderId(null);

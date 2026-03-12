@@ -20,12 +20,13 @@ export async function POST(request: NextRequest) {
     const isAdminRequest = !!authHeader;
     const isAdmin = isAdminRequest ? await requireAdmin(request).then(() => true).catch(() => false) : false;
     const body = await request.json();
-    const { studentId, courseId, amount, customerName, customerPhone } = body as {
+    const { studentId, courseId, amount, customerName, customerPhone, customerEmail } = body as {
       studentId?: string | null;
       courseId?: string | null;
       amount?: number;
       customerName?: string | null;
       customerPhone?: string | null;
+      customerEmail?: string | null;
     };
 
     // Public flow should not trust amount from client.
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         customer_name: customerName || null,
         customer_phone: customerPhone || null,
+        customer_email: customerEmail || null,
       })
       .select()
       .single();
