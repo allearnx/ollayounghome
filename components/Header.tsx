@@ -151,7 +151,7 @@ export default function Header() {
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#F5F3FF'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'white'; }}
             >
-              시작하기
+              보카 시작하기
             </a>
             {/* 레벨테스트 버튼 */}
             <a
