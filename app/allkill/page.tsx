@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { Nanum_Pen_Script } from 'next/font/google';
+import { Nanum_Pen_Script, Montserrat } from 'next/font/google';
 import Header from '@/components/Header';
 import AllkillPayButton from '@/components/AllkillPayButton';
 
 const nanumPen = Nanum_Pen_Script({ weight: ['400'], preload: false });
+const montserrat = Montserrat({ weight: ['700', '900'], subsets: ['latin'], preload: false });
 
 export const metadata: Metadata = {
   title: '올킬보카 | 수능 영어 단어, 이제 올킬',
@@ -27,7 +28,7 @@ export default function AllkillPage() {
   return (
     <>
       <style suppressHydrationWarning>{`
-        .allkill-montserrat { font-family: 'Montserrat', sans-serif; }
+        .allkill-montserrat { font-family: var(--font-montserrat), sans-serif; }
         .allkill-pen { font-family: 'Nanum Pen Script', cursive; }
 
         /* 가격 카드 반응형 */
@@ -163,7 +164,7 @@ export default function AllkillPage() {
         }
       `}</style>
 
-      <main style={{ fontFamily: "'Pretendard', sans-serif", background: '#ffffff', color: C.gray800, overflowX: 'hidden' }}>
+      <main style={{ fontFamily: "'Pretendard', sans-serif", background: '#ffffff', color: C.gray800, overflowX: 'hidden', ['--font-montserrat' as string]: montserrat.style.fontFamily }}>
         <Header />
 
         {/* ① 히어로 */}
@@ -188,11 +189,36 @@ export default function AllkillPage() {
               이제는 그만.
             </p>
 
+            {/* 신뢰 지표 */}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+              {['🎁 1주 무료 체험', '✓ 언제든 취소 가능', '⚡ 얼리버드 특가 9,900원'].map((badge) => (
+                <span key={badge} style={{ background: C.lavenderLight, color: C.gray600, border: `1px solid rgba(167,139,250,0.25)`, fontSize: 14, fontWeight: 600, padding: '7px 16px', borderRadius: 100 }}>{badge}</span>
+              ))}
+            </div>
+
+            {/* Hero CTA */}
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="#price" style={{ display: 'inline-block', background: '#A78BFA', color: 'white', fontSize: 17, fontWeight: 700, padding: '16px 40px', borderRadius: 12, textDecoration: 'none', boxShadow: '0 8px 28px rgba(167,139,250,0.4)', letterSpacing: '-0.2px' }}>
+                지금 시작하기 →
+              </a>
+              <a href="#why" style={{ display: 'inline-block', background: 'transparent', color: C.gray600, fontSize: 17, fontWeight: 600, padding: '16px 32px', borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(167,139,250,0.35)' }}>
+                자세히 알아보기
+              </a>
+            </div>
+
+            {/* 스크롤 인디케이터 */}
+            <div style={{ marginTop: 56, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.35 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.gray600, letterSpacing: '0.5px' }}>SCROLL</span>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: C.gray600 }}>
+                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
           </div>
         </section>
 
         {/* ② WHY 올킬보카 — Dark Bento Grid */}
-        <section className="allkill-section" style={{ padding: '96px 60px', background: '#0D1117', position: 'relative', overflow: 'hidden' }}>
+        <section id="why" className="allkill-section" style={{ padding: '96px 60px', background: '#0D1117', position: 'relative', overflow: 'hidden' }}>
           {/* Ambient glow */}
           <div style={{ position: 'absolute', top: -200, left: -150, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -200, right: -100, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(77,217,192,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -703,14 +729,10 @@ export default function AllkillPage() {
             <p style={{ fontSize: 'clamp(16px, 1.5vw, 20px)', color: 'rgba(255,255,255,0.75)', marginBottom: 40, lineHeight: 1.7 }}>
               1주 무료 체험, 언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
             </p>
-            <a
-              href="https://voca.allrounderenglish.co.kr"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-block', background: 'white', color: C.lavenderDark, fontSize: 18, fontWeight: 700, padding: '18px 48px', borderRadius: 14, textDecoration: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
-            >
-              올킬보카 시작하기 →
-            </a>
+            <div style={{ maxWidth: 320, margin: '0 auto' }}>
+              <AllkillPayButton />
+            </div>
+            <p style={{ marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>이미 구독 중이신가요? <a href="https://app.allrounderenglish.co.kr" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'underline' }}>바로 접속하기</a></p>
           </div>
         </section>
       </main>
