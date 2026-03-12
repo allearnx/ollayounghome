@@ -58,16 +58,24 @@ export default function AllkillPayButton() {
       <button
         onClick={() => setShowModal(true)}
         style={{
-          width: '100%', padding: 16, borderRadius: 12, border: 'none',
-          cursor: 'pointer', fontFamily: 'inherit', fontSize: 16, fontWeight: 700,
-          background: '#A78BFA', color: 'white',
-          boxShadow: '0 8px 24px rgba(167,139,250,0.35)',
+          width: '100%', padding: '18px 24px', borderRadius: 14, border: 'none',
+          cursor: 'pointer', fontFamily: 'inherit', fontSize: 17, fontWeight: 800,
+          background: 'white',
+          color: '#7C3AED',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
           transition: 'transform 0.15s, box-shadow 0.15s',
+          letterSpacing: '-0.2px',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 12px 40px rgba(0,0,0,0.2)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+        }}
       >
-        지금 시작하기 →
+        ✦ 올킬보카 시작하기 →
       </button>
 
       {showModal && (

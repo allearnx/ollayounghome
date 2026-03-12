@@ -162,13 +162,22 @@ export default function AllkillPage() {
           .allkill-flow-2 { grid-template-columns: 1fr !important; }
           .allkill-hero-title { font-size: 32px !important; }
         }
+
+        /* 모바일 전용 패딩 오버라이드 */
+        @media (max-width: 768px) {
+          .allkill-hero-section { padding: 80px 20px 60px !important; }
+          .allkill-stats-section { padding: 64px 20px !important; }
+          .allkill-final-cta { padding: 72px 20px !important; }
+          .allkill-stat-item { min-width: 0 !important; }
+          .allkill-bento-report { display: none !important; }
+        }
       `}</style>
 
       <main style={{ fontFamily: "'Pretendard', sans-serif", background: '#ffffff', color: C.gray800, overflowX: 'hidden', ['--font-montserrat' as string]: montserrat.style.fontFamily }}>
         <Header />
 
         {/* ① 히어로 */}
-        <section style={{ minHeight: '60vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '120px 60px 80px', position: 'relative', overflow: 'hidden' }}>
+        <section className="allkill-hero-section" style={{ minHeight: '60vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '120px 60px 80px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'rgba(167,139,250,0.06)', top: -200, right: -200, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'rgba(167,139,250,0.05)', bottom: -100, left: '10%', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', background: 'rgba(77,217,192,0.08)', top: '30%', left: '45%', pointerEvents: 'none' }} />
@@ -272,7 +281,7 @@ export default function AllkillPage() {
                     <p className="allkill-bento-body" style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 360 }}>학습 완료 후 리포트 링크를 학부모에게 바로 공유. 어떤 단어를 틀렸는지, 몇 단계까지 완료했는지 한눈에 확인하세요.</p>
                   </div>
                   {/* Right: mini report UI */}
-                  <div style={{ flexShrink: 0, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 16, padding: '24px 28px', minWidth: 220 }}>
+                  <div className="allkill-bento-report" style={{ flexShrink: 0, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 16, padding: '24px 28px', minWidth: 220 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: 16, letterSpacing: '0.5px' }}>학습 리포트</div>
                     {[
                       { label: '플래시카드', pct: '100%', done: true },
@@ -527,7 +536,7 @@ export default function AllkillPage() {
         </section>
 
         {/* ⑥ Stats 배너 */}
-        <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)', padding: '80px 60px', position: 'relative', overflow: 'hidden' }}>
+        <div className="allkill-stats-section" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)', padding: '80px 60px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -120, right: -120, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(77,217,192,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -100, left: '10%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div className="allkill-stats-inner" style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -667,7 +676,7 @@ export default function AllkillPage() {
                   <div style={{ fontSize: 'clamp(13px, 1.2vw, 14px)', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 10 }}>아래 주소로 접속하거나, 올라영 홈페이지에서 &quot;올킬보카 학습하러 가기&quot; 버튼을 클릭하세요.</div>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(77,217,192,0.1)', border: '1px solid rgba(77,217,192,0.3)', borderRadius: 10, padding: '8px 14px' }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#4DD9C0', flexShrink: 0 }} />
-                    <span className="allkill-montserrat" style={{ fontSize: 13, fontWeight: 700, color: '#4DD9C0', letterSpacing: '0.3px' }}>app.allrounderenglish.co.kr</span>
+                    <span className="allkill-montserrat" style={{ fontSize: 13, fontWeight: 700, color: '#4DD9C0', letterSpacing: '0.3px' }}>voca.allrounderenglish.co.kr</span>
                   </div>
                 </div>
               </div>
@@ -694,12 +703,12 @@ export default function AllkillPage() {
         </section>
 
         {/* ⑨ Final CTA */}
-        <section className="allkill-final-cta" style={{ background: C.lavender, padding: '100px 60px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <section className="allkill-final-cta" style={{ background: C.lavender, padding: '100px 60px', textAlign: 'center', position: 'relative', overflow: 'hidden', boxSizing: 'border-box' }}>
           <div style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -80, left: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(91,33,182,0.2)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 2, maxWidth: 600, margin: '0 auto' }}>
             <h2 style={{ fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 900, color: 'white', marginBottom: 16, lineHeight: 1.3 }}>
-              지금 바로<br /><span style={{ color: '#FEF08A' }}>올킬 시작</span>하세요
+              지금 바로<br /><span style={{ color: '#FEF08A' }}>올킬보카 시작</span>하세요
             </h2>
             <p style={{ fontSize: 'clamp(16px, 1.5vw, 20px)', color: 'rgba(255,255,255,0.75)', marginBottom: 40, lineHeight: 1.7 }}>
               1주 무료 체험, 언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
