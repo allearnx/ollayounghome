@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>올킬보카 | 수능 영어 단어, 이제 올킬</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Montserrat:wght@800;900&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --lavender: #A78BFA;
+  --lavender-dark: #7C3AED;
+  --lavender-deep: #5B21B6;
+  --lavender-light: #F5F3FF;
+  --mint: #4DD9C0;
+  --mint-light: #D9F7FC;
+  --mint-dark: #0B7A6A;
+  --rose: #F43F5E;
+  --amber: #F59E0B;
+  --sky: #06B6D4;
+  --gray-50: #F9F8FF;
+  --gray-100: #F2F0FF;
+  --gray-400: #9E97C8;
+  --gray-600: #5C5490;
+  --gray-800: #2D2760;
+  --white: #ffffff;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--white);
+  color: var(--gray-800);
+  overflow-x: hidden;
+}
+
+/* ── 네비게이션 ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(167,139,250,0.15);
+  padding: 0 60px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.nav-logo-badge {
+  background: var(--lavender);
+  color: white; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 100px;
+}
+.nav-logo-text {
+  font-size: 18px; font-weight: 900;
+  color: var(--lavender-dark);
+}
+.nav-logo-sub {
+  font-size: 12px; color: var(--gray-400);
+  font-weight: 500;
+}
+
+.nav-links {
+  display: flex; align-items: center; gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  text-decoration: none;
+  font-size: 14px; font-weight: 500;
+  color: var(--gray-600);
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--lavender-dark); }
+
+.nav-cta {
+  background: var(--lavender);
+  color: white !important;
+  font-weight: 700 !important;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: background 0.2s !important;
+}
+.nav-cta:hover { background: var(--lavender-dark) !important; color: white !important; }
+
+/* ── 히어로 섹션 ── */
+.hero {
+  min-height: 60vh;
+  background: var(--lavender);
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 60px 30px;
+  position: relative; overflow: hidden;
+}
+
+.hero-bg-circle {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.hbc1 { width: 600px; height: 600px; top: -200px; right: -200px; }
+.hbc2 { width: 300px; height: 300px; bottom: -100px; left: 10%; }
+.hbc3 { width: 150px; height: 150px; top: 30%; left: 45%; background: rgba(77,217,192,0.1); }
+
+.hero-inner {
+  max-width: 1200px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  position: relative; z-index: 2;
+}
+
+.hero-label {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.22);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: white; font-size: 15px; font-weight: 700;
+  padding: 8px 20px; border-radius: 100px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s ease both;
+  letter-spacing: 0.3px;
+}
+.hero-label span { color: #B2F5F0; }
+
+.hero-title {
+  font-size: 72px; font-weight: 900;
+  color: white; line-height: 1.15;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+.hero-title .mint { color: var(--mint); }
+
+.desc-br { display: none; }
+.hero-desc {
+  font-size: 74px; color: rgba(0,0,0,0.75); font-weight: 400;
+  font-family: 'Nanum Pen Script', cursive;
+  line-height: 1.8; margin-top: 40px; margin-bottom: 40px; text-align: center;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-features {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 44px;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.hero-feature {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px; padding: 14px 18px;
+  color: white;
+  transition: background 0.2s;
+}
+.hero-feature:hover { background: rgba(255,255,255,0.18); }
+.feature-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.feature-text strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.feature-text span { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+.hero-btns {
+  display: flex; gap: 12px; justify-content: center;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+
+.btn-white {
+  background: white; color: var(--lavender-dark);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 700;
+  padding: 14px 32px; border-radius: 12px; border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-white:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+
+.btn-outline-white {
+  background: transparent; color: white;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 14px 24px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-outline-white:hover { background: rgba(255,255,255,0.1); }
+
+/* 오른쪽 — 플래시카드 비주얼 */
+.hero-visual {
+  display: flex; flex-direction: column; gap: 16px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.flashcard {
+  background: white; border-radius: 20px;
+  padding: 32px 36px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.fc-step {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px;
+}
+.fc-step-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white;
+  background: var(--gray-400);
+}
+.fc-step-dot.done { background: var(--mint); }
+.fc-step-dot.active { background: var(--lavender-dark); }
+.fc-step-line { flex: 1; height: 2px; background: var(--gray-100); }
+.fc-step-line.done { background: var(--mint); }
+
+.fc-word {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 36px; font-weight: 900;
+  color: var(--gray-800); margin-bottom: 4px;
+}
+.fc-pos { font-size: 12px; color: var(--lavender); font-weight: 700; margin-bottom: 12px; }
+.fc-meaning { font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 8px; }
+.fc-example {
+  font-size: 13px; color: var(--gray-400); line-height: 1.6;
+  border-left: 3px solid var(--mint-light);
+  padding-left: 12px; margin-top: 12px;
+}
+.fc-example em { color: var(--lavender-dark); font-style: normal; font-weight: 700; }
+
+.fc-badge {
+  position: absolute; top: -10px; right: 20px;
+  background: var(--mint); color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 100px;
+}
+
+/* 4단계 미니 진행바 */
+.step-progress {
+  background: white; border-radius: 14px;
+  padding: 18px 22px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  display: flex; align-items: center; gap: 0;
+}
+
+.sp-item {
+  flex: 1; text-align: center; padding: 8px 4px;
+  font-size: 11px; font-weight: 600;
+  color: var(--gray-400);
+  border-radius: 8px;
+}
+.sp-item.sp-done { color: var(--mint-dark); background: var(--mint-light); }
+.sp-item.sp-active { color: var(--lavender-dark); background: var(--lavender-light); font-weight: 700; }
+.sp-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+.sp-arrow { color: var(--gray-400); font-size: 12px; padding: 0 4px; }
+
+/* ── 섹션 공통 ── */
+section { padding: 96px 60px; }
+.section-inner { max-width: 1200px; margin: 0 auto; }
+.section-label {
+  display: inline-block;
+  background: var(--lavender-light); color: var(--lavender-dark);
+  font-size: 12px; font-weight: 700;
+  padding: 5px 14px; border-radius: 100px;
+  margin-bottom: 16px; letter-spacing: 0.5px;
+}
+.section-title {
+  font-size: 36px; font-weight: 900;
+  color: var(--gray-800); line-height: 1.3;
+  margin-bottom: 14px;
+}
+.section-title .mint { color: var(--mint-dark); }
+.section-title .purple { color: var(--lavender-dark); }
+.section-desc {
+  font-size: 16px; color: var(--gray-400);
+  line-height: 1.8; margin-bottom: 56px;
+}
+
+/* ── ② 왜 올킬보카? ── */
+.why-section { background: var(--gray-50); }
+
+.why-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.why-grid-bottom {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 24px; margin-top: 24px;
+  max-width: 66.66%;
+  margin-left: auto; margin-right: auto;
+}
+
+.why-card {
+  background: white; border-radius: 20px;
+  padding: 36px 32px;
+  border: 1px solid rgba(167,139,250,0.12);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; flex-direction: column;
+}
+.why-card .why-desc { flex: 1; }
+.why-card .why-tag { align-self: center; margin-top: 20px; width: fit-content; }
+.why-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(167,139,250,0.12); }
+
+.why-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin: 0 auto 20px;
+}
+.why-card { text-align: center; }
+.wi-purple { background: var(--lavender-light); }
+.wi-mint { background: var(--mint-light); }
+.wi-amber { background: #FEF3C7; }
+.wi-sky { background: #EEF2FF; }
+.wt-sky { background: #EEF2FF; color: #4F46E5; }
+.wi-rose { background: #FFF0F3; }
+.wt-rose { background: #FFE4E6; color: #F43F5E; }
+.wi-slate { background: #F1F5F9; }
+.wt-slate { background: #F1F5F9; color: #475569; }
+
+.why-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--gray-800); text-align: center; }
+.why-desc { font-size: 14px; color: var(--gray-400); line-height: 1.7; }
+.why-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 16px;
+  font-size: 12px; font-weight: 700;
+  padding: 0 16px; border-radius: 100px;
+  line-height: 1; height: 32px;
+  width: fit-content;
+}
+.wt-purple { background: var(--lavender-light); color: var(--lavender-dark); }
+.wt-mint { background: var(--mint-light); color: var(--mint-dark); }
+.wt-amber { background: #FEF3C7; color: #B45309; }
+
+/* ── ③ 4단계 학습 흐름 ── */
+.flow-section { background: white; }
+
+.flow-steps-big {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; position: relative;
+  width: 100%;
+  align-items: stretch;
+}
+.flow-step-big { align-items: stretch; }
+.flow-steps-big.round2 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.flow-step-big {
+  text-align: center; padding: 0 8px;
+  position: relative;
+  display: flex; flex-direction: column;
+}
+
+.fsb-num {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative; z-index: 2;
+}
+.fsb-1 { background: white; color: var(--gray-800); }
+.fsb-2 { background: white; color: var(--gray-800); }
+.fsb-3 { background: white; color: var(--gray-800); }
+.fsb-4 { background: white; color: var(--gray-800); }
+
+.fsb-card {
+  background: var(--mint-light); border-radius: 16px;
+  padding: 24px 20px; margin-top: 0;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.2s;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  flex: 1;
+}
+.fsb-card:hover { border-color: var(--lavender); transform: translateY(-4px); }
+.fsb-1-card { background: white; border-top: 4px solid #4DD9C0; }
+.fsb-2-card { background: white; border-top: 4px solid #06B6D4; }
+.fsb-3-card { background: white; border-top: 4px solid #0891B2; }
+.fsb-4-card { background: #1E3A5F; border-top: 4px solid #3B82F6; color: white; }
+.fsb-4-card .fsb-name { color: white; }
+.fsb-4-card .fsb-desc { color: rgba(255,255,255,0.85); }
+
+.fsb-icon { display: none; }
+.fsb-name { font-size: 15px; font-weight: 900; color: var(--gray-800); margin-bottom: 10px; text-align: center; white-space: nowrap; }
+.fsb-pass {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 100px;
+  margin-bottom: 10px;
+}
+.fp-mint { background: white; color: #0D9E8A; border: 1.5px solid #0D9E8A; }
+.fp-purple { background: white; color: #7C3AED; border: 1.5px solid #7C3AED; }
+
+.fsb-desc { font-size: 13px; color: var(--gray-600); line-height: 1.8; margin-top: 16px; padding-top: 16px; width: 100%; text-align: center; word-break: keep-all; border-top: 1px solid rgba(0,0,0,0.06); }
+.fsb-pass { margin-bottom: 0; margin-top: 10px; }
+
+
+/* 회독 래퍼 글래스 */
+.round-wrapper {
+  border-radius: 28px;
+  padding: 40px 32px 36px;
+  margin-bottom: 80px;
+  position: relative;
+  overflow: visible;
+}
+.round-wrapper-1 {
+  background: linear-gradient(135deg, rgba(209,250,250,0.6), rgba(207,250,254,0.4));
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 
+    0 8px 32px rgba(6,182,212,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(6,182,212,0.1);
+  backdrop-filter: blur(12px);
+}
+.round-wrapper-2 {
+  background: linear-gradient(135deg, rgba(237,233,254,0.6), rgba(221,214,254,0.4));
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 
+    0 8px 32px rgba(124,58,237,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(124,58,237,0.1);
+  backdrop-filter: blur(12px);
+}
+.round-label {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px;
+}
+.round-label-badge {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px; font-weight: 900; letter-spacing: 0;
+  padding: 6px 18px; border-radius: 100px;
+}
+.rlb-1 {
+  background: rgba(6,182,212,0.15);
+  color: #0891B2;
+  border: 1px solid rgba(6,182,212,0.25);
+}
+.rlb-2 {
+  background: rgba(124,58,237,0.12);
+  color: #7C3AED;
+  border: 1px solid rgba(124,58,237,0.2);
+}
+.round-label-title {
+  font-size: 18px; font-weight: 900; color: var(--gray-800);
+}
+.round-label-desc {
+  margin-left: auto;
+  font-size: 12px; color: var(--gray-400); font-weight: 500;
+}
+
+/* ── ④ 학부모/학생 포인트 ── */
+.parent-section { background: var(--gray-50); }
+
+.parent-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.parent-card {
+  background: white; border-radius: 24px;
+  padding: 44px 40px;
+  border: 1px solid rgba(167,139,250,0.12);
+}
+
+.pc-tag {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 100px;
+  margin-bottom: 20px;
+}
+.pct-parent { background: var(--lavender-light); color: var(--lavender-dark); }
+.pct-student { background: var(--mint-light); color: var(--mint-dark); }
+
+.pc-title { font-size: 22px; font-weight: 900; color: var(--gray-800); margin-bottom: 12px; line-height: 1.4; }
+.pc-desc { font-size: 14px; color: var(--gray-400); line-height: 1.8; margin-bottom: 28px; }
+
+.pc-points { display: flex; flex-direction: column; gap: 12px; }
+.pc-point {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 14px; color: var(--gray-600);
+}
+.pc-point::before {
+  content: '✓';
+  color: white; font-size: 11px; font-weight: 700;
+  background: var(--mint);
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ── ⑤ 지금 공부 중 배너 ── */
+.stats-banner {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  background-image: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%),
+    linear-gradient(rgba(77,217,192,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77,217,192,0.04) 1px, transparent 1px);
+  background-size: cover, 40px 40px, 40px 40px;
+  padding: 80px 60px;
+  position: relative; overflow: hidden;
+}
+.stats-banner::before {
+  content: '';
+  position: absolute; top: -120px; right: -120px;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,217,192,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.stats-banner::after {
+  content: '';
+  position: absolute; bottom: -100px; left: 10%;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stats-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 40px; position: relative; z-index: 1;
+}
+
+.stats-text h2 {
+  font-size: 36px; font-weight: 900; color: white; margin-bottom: 12px; line-height: 1.3;
+}
+.stats-text p { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.7; }
+
+.stats-nums {
+  display: flex; gap: 16px;
+}
+.stat-num-item {
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 28px 40px;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s, background 0.2s;
+  min-width: 160px;
+}
+.stat-num-item:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-4px);
+}
+.sni-num {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 48px; font-weight: 900; color: #4DD9C0;
+  line-height: 1; margin-bottom: 10px;
+  text-shadow: 0 0 30px rgba(77,217,192,0.4);
+  white-space: nowrap;
+}
+.sni-label {
+  font-size: 12px; color: rgba(255,255,255,0.65); letter-spacing: 0.3px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(77,217,192,0.3);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* ── ⑥ 가격 ── */
+.price-section { background: white; }
+
+.price-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.price-card {
+  border-radius: 20px; padding: 36px 32px;
+  border: 2px solid var(--gray-100);
+  position: relative; transition: transform 0.2s;
+}
+.price-card:hover { transform: translateY(-4px); }
+.price-card.featured {
+  border-color: var(--lavender);
+  box-shadow: 0 16px 48px rgba(167,139,250,0.15);
+}
+
+.pc-popular {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: var(--lavender); color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 16px; border-radius: 100px;
+  white-space: nowrap;
+}
+
+.price-plan { font-size: 14px; font-weight: 700; color: var(--gray-400); margin-bottom: 12px; }
+.price-main {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 40px; font-weight: 900; color: var(--gray-800);
+  margin-bottom: 4px;
+}
+.price-main span { font-size: 16px; font-weight: 500; color: var(--gray-400); }
+.price-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+.price-divider { height: 1px; background: var(--gray-100); margin-bottom: 24px; }
+
+.price-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+.pf-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--gray-600);
+}
+.pf-item::before {
+  content: '✓'; color: var(--mint); font-weight: 700; font-size: 13px;
+}
+
+.btn-plan {
+  width: 100%; padding: 14px;
+  border-radius: 12px; border: none; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  transition: all 0.2s;
+}
+.btn-plan-outline {
+  background: transparent; color: var(--lavender-dark);
+  border: 1.5px solid var(--lavender);
+}
+.btn-plan-outline:hover { background: var(--lavender-light); }
+.btn-plan-fill {
+  background: var(--lavender); color: white;
+  box-shadow: 0 8px 20px rgba(167,139,250,0.3);
+}
+.btn-plan-fill:hover { background: var(--lavender-dark); }
+
+/* ── ⑦ 최종 CTA ── */
+.final-cta {
+  background: var(--lavender);
+  padding: 36px 60px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.final-cta::before {
+  content: ''; position: absolute;
+  top: -100px; right: -100px;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.final-cta::after {
+  content: ''; position: absolute;
+  bottom: -80px; left: -80px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: rgba(91,33,182,0.2);
+}
+.final-cta-inner { position: relative; z-index: 2; max-width: 600px; margin: 0 auto; }
+.final-cta h2 { font-size: 40px; font-weight: 900; color: white; margin-bottom: 8px; line-height: 1.3; }
+.final-cta p { font-size: 16px; color: rgba(255,255,255,0.75); margin-bottom: 0; line-height: 1.7; }
+.final-cta-btns { display: flex; gap: 12px; justify-content: center; }
+
+/* ── 푸터 ── */
+footer {
+  background: var(--gray-800); color: rgba(255,255,255,0.5);
+  padding: 48px 60px; font-size: 13px; line-height: 2;
+}
+.footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; }
+.footer-brand { font-size: 16px; font-weight: 700; color: white; margin-bottom: 8px; }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; }
+.footer-links a:hover { color: white; }
+
+/* ── 애니메이션 ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 모바일 반응형 ── */
+@media (max-width: 768px) {
+
+  /* 네비 */
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+
+  /* 공통 섹션 패딩 */
+  section { padding: 64px 20px; }
+
+  /* 히어로 */
+  .hero { padding: 80px 24px 30px; min-height: 50vh; }
+  .hero-title { font-size: 44px; }
+  .hero-br { display: block; }
+  .hero-title br:last-child { display: block; }
+  .hero-desc { font-size: 27px; }
+  .desc-br { display: block; }
+
+  /* WHY 카드 */
+  .why-grid { grid-template-columns: 1fr; }
+  .why-grid-bottom { grid-template-columns: 1fr; max-width: 100%; margin-left: 0; margin-right: 0; }
+
+  /* 섹션 타이틀 */
+  .section-title { font-size: 26px; }
+
+  /* flow 1회독 — 2열 */
+  .flow-steps-big { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+  .flow-step-big { padding: 0 4px; }
+  .fsb-num { width: 36px; height: 36px; font-size: 14px; margin-bottom: 10px; }
+
+  /* 래퍼 */
+  .round-wrapper { padding: 24px 16px 28px; margin-bottom: 40px; }
+  .round-label { flex-wrap: wrap; gap: 8px; }
+  .round-label-desc { display: none; }
+
+  /* 학부모 카드 */
+  .parent-grid { grid-template-columns: 1fr; }
+  .parent-card { padding: 28px 24px; }
+
+  /* stats-banner */
+  .stats-banner { padding: 48px 20px; }
+  .stats-inner { flex-direction: column; align-items: flex-start; gap: 32px; }
+  .stats-text h2 { font-size: 26px; }
+  .stats-nums { width: 100%; justify-content: space-between; gap: 10px; }
+  .stat-num-item { padding: 20px 12px; flex: 1; }
+  .sni-num { font-size: 30px; }
+
+  /* vocab 섹션 */
+  .vocab-section { padding: 64px 20px !important; }
+  .vocab-section .section-inner > div:last-child > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 가격 카드 */
+  .price-cards { grid-template-columns: 1fr; }
+  .price-section { padding: 64px 20px; }
+
+  /* 최종 CTA */
+  .final-cta { padding: 64px 20px; }
+  .final-cta h2 { font-size: 28px; }
+  .final-cta-btns { flex-direction: column; align-items: center; }
+
+  /* 푸터 */
+  footer { padding: 40px 20px; }
+  .footer-inner { flex-direction: column; gap: 20px; }
+  .footer-links { flex-wrap: wrap; gap: 16px; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 36px; }
+  .flow-steps-big { grid-template-columns: 1fr !important; }
+  .stats-nums { flex-direction: column; gap: 24px; }
+  .stat-num-item { border-left: none !important; padding-left: 0 !important; }
+  .vocab-section .section-inner > div:last-child > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+</head>
+<body>
+
+
+
+<!-- ① 히어로 -->
+<section class="hero">
+  <div class="hero-bg-circle hbc1"></div>
+  <div class="hero-bg-circle hbc2"></div>
+  <div class="hero-bg-circle hbc3"></div>
+
+  <div class="hero-inner">
+    <div class="hero-text" style="max-width: 800px; width: 100%;">
+      <div class="hero-label">✦ <span>올라영</span> × 올킬보카</div>
+      <h1 class="hero-title">
+        <span style="color:#FEF08A;">올킬보카</span><span style="color:white;">만의</span><span class="hero-br"> </span><span style="color:white;">7단계 학습</span><br><span style="color:#FEF08A;">진짜 내 단어</span><span style="color:white;">로</span><br><span style="color:white;">만드세요.</span>
+      </h1>
+      <p class="hero-desc">
+        방금 시험봤는데 돌아서면 대답을 못하는 아이들.<br>이제는 그만.
+      </p>
+
+      </div>
+
+      
+    </div>
+
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ② 왜 올킬보카? -->
+<section class="why-section">
+  <div class="section-inner">
+    <div class="section-label" style="font-size: 16px; padding: 8px 20px;">WHY 올킬보카</div>
+    <h2 class="section-title">단어 공부, <span class="purple">이렇게 달라요</span></h2>
+    <p class="section-desc">기존 단어장과는 다릅니다. 단계별 학습으로 진짜 내 단어를 만들어 드려요.</p>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon wi-purple" style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#7C3AED;">01</div>
+        <div class="why-title">4단계<br>통과 시스템</div>
+        <div class="why-desc">플래시카드→퀴즈(80점)→스펠링(80점)→매칭(90점). 4단계를 모두 통과해야 진짜 내 단어가 됩니다.</div>
+        <span class="why-tag wt-purple">Pass / Fail 시스템</span>
+      </div>
+      <div class="why-card">
+        <div class="why-icon wi-mint" style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#0B7A6A;">02</div>
+        <div class="why-title">2회독<br>완전 정복</div>
+        <div class="why-desc">1회독으로 외우고, 2회독에서 유의어·반의어·숙어까지. 9가지 유형의 종합문제로 단어를 완전히 내 것으로 만드세요.</div>
+        <span class="why-tag wt-mint">심화 학습 시스템</span>
+      </div>
+      <div class="why-card">
+        <div class="why-icon wi-amber" style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#B45309;">03</div>
+        <div class="why-title">AI<br>영작 채점</div>
+        <div class="why-desc">2회독에서는 뜻을 직접 영작합니다. AI가 의미 이해를 기반으로 채점해 단순 암기가 아닌 진짜 이해를 확인합니다.</div>
+        <span class="why-tag wt-amber">AI 채점 시스템</span>
+      </div>
+    </div>
+    <div class="why-grid-bottom">
+      <div class="why-card">
+        <div class="why-icon wi-rose" style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#F43F5E;">04</div>
+        <div class="why-title">틀린 단어만<br>재시험</div>
+        <div class="why-desc">틀린 단어만 자동으로 모아서 다시 시험볼 수 있습니다. 약한 단어를 집중 공략해 완벽하게 잡으세요.</div>
+        <span class="why-tag wt-rose">오답 집중 복습</span>
+      </div>
+      <div class="why-card">
+        <div class="why-icon wi-sky" style="font-family:'Montserrat',sans-serif; font-size:22px; font-weight:900; color:#0369A1;">05</div>
+        <div class="why-title">학부모<br>리포트 공유</div>
+        <div class="why-desc">학습 완료 후 리포트 링크를 학부모에게 바로 공유. 어떤 단어를 틀렸는지 몇 단계까지 완료했는지 한눈에 확인하세요.</div>
+        <span class="why-tag wt-sky">실시간 리포트</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ③ 단어 콘텐츠 -->
+<section class="vocab-section" style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); position:relative; overflow:hidden;">
+
+  <!-- 배경 글로우 -->
+  <div style="position:absolute; top:-150px; right:-100px; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%); pointer-events:none;"></div>
+  <div style="position:absolute; bottom:-100px; left:5%; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(77,217,192,0.1) 0%, transparent 70%); pointer-events:none;"></div>
+
+  <div class="section-inner" style="position:relative; z-index:1;">
+    <div class="section-label" style="font-size:16px; padding:8px 20px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.2);">수록 단어</div>
+    <h2 class="section-title" style="color:white;">중학부터 수능까지,<br><span style="color:#4DD9C0;">필요한 단어는 다 있어요</span></h2>
+    <p class="section-desc" style="color:rgba(255,255,255,0.6);">교과서부터 모의고사, 수능 기출까지.<br>학년과 목표에 맞게 골라서 공부하세요.</p>
+
+    <div style="display:flex; flex-direction:column; gap:24px; margin-top:56px;">
+
+      <!-- 중학 -->
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:24px; padding:36px 40px; backdrop-filter:blur(8px); word-break:keep-all;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+          <div style="background:#A78BFA; border-radius:12px; padding:8px 18px; font-size:14px; font-weight:900; color:white;">중학교</div>
+          <div style="font-size:18px; font-weight:700; color:white;">전학년 전교과서 단어</div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <span style="background:rgba(167,139,250,0.25); color:#C4B5FD; border:1px solid rgba(167,139,250,0.4); border-radius:100px; padding:7px 18px; font-size:13px; font-weight:700;">중1 전교과서</span>
+          <span style="background:rgba(167,139,250,0.25); color:#C4B5FD; border:1px solid rgba(167,139,250,0.4); border-radius:100px; padding:7px 18px; font-size:13px; font-weight:700;">중2 전교과서</span>
+          <span style="background:rgba(167,139,250,0.25); color:#C4B5FD; border:1px solid rgba(167,139,250,0.4); border-radius:100px; padding:7px 18px; font-size:13px; font-weight:700;">중3 전교과서</span>
+        </div>
+      </div>
+
+      <!-- 고등 모의고사 -->
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:24px; padding:36px 40px; backdrop-filter:blur(8px); word-break:keep-all;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
+          <div style="background:#4DD9C0; border-radius:12px; padding:8px 18px; font-size:14px; font-weight:900; color:#0F172A;">모의고사</div>
+          <div style="font-size:18px; font-weight:700; color:white;">최근 5개년 · 고1–3</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+              <span style="font-size:13px; font-weight:900; color:#4DD9C0; min-width:24px;">고1</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">3월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">6월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">9월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">11월</span>
+              <span style="font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap;">× 5개년</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+              <span style="font-size:13px; font-weight:900; color:#4DD9C0; min-width:24px;">고2</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">3월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">6월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">9월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">11월</span>
+              <span style="font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap;">× 5개년</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+              <span style="font-size:13px; font-weight:900; color:#4DD9C0; min-width:24px;">고3</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">3월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">6월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">9월</span>
+              <span style="background:rgba(77,217,192,0.15); color:#4DD9C0; border:1px solid rgba(77,217,192,0.35); border-radius:100px; padding:5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">11월</span>
+              <span style="font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap;">× 5개년</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 수능 기출 + 교과서 -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:24px; padding:36px 40px; backdrop-filter:blur(8px); word-break:keep-all;">
+          <div style="background:#FEF08A; border-radius:12px; padding:8px 18px; font-size:14px; font-weight:900; color:#713F12; display:inline-block; margin-bottom:20px;">수능 기출</div>
+          <div style="font-size:16px; font-weight:700; color:white; margin-bottom:8px;">수능 기출 단어</div>
+          <div style="font-size:14px; color:rgba(255,255,255,0.5); line-height:1.7;">실제 수능에 출제된 단어만 엄선했습니다.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:24px; padding:36px 40px; backdrop-filter:blur(8px); word-break:keep-all;">
+          <div style="background:#C4B5FD; border-radius:12px; padding:8px 18px; font-size:14px; font-weight:900; color:#3B0764; display:inline-block; margin-bottom:20px;">교과서</div>
+          <div style="font-size:16px; font-weight:700; color:white; margin-bottom:8px;">고등 교과서 단어</div>
+          <div style="font-size:14px; color:rgba(255,255,255,0.5); line-height:1.7;">고등 영어 교과서 핵심 단어를 수록했습니다.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ④ 4단계 학습 흐름 -->
+<section class="flow-section">
+  <div class="section-inner">
+    <div class="section-label">학습 시스템</div>
+    <h2 class="section-title">1회독 + 2회독, <span class="purple">총 7단계</span><br>외우고, 이해하고,<br>완전히 내 것으로.</h2>
+    <p class="section-desc">각 단계마다 통과 기준이 있습니다.<br>2회 연속 실패하면 오답만 모아서 다시 테스트합니다.<br>모르는 단어는 끝까지 잡아드려요.</p>
+
+
+    <!-- 1회독 -->
+    <div class="round-wrapper round-wrapper-1">
+      <div class="round-label">
+        <span class="round-label-badge rlb-1">1회독</span>
+        <span class="round-label-title">단어 암기</span>
+        <span class="round-label-desc">4단계 통과 시스템</span>
+      </div>
+    <div class="flow-steps-big">
+      <div class="flow-step-big">
+        <div class="fsb-num fsb-1">1</div>
+        <div class="fsb-card fsb-1-card">
+          <div class="fsb-name">플래시카드</div>
+          <span class="fsb-pass fp-mint">자유 학습</span>
+          <div class="fsb-desc">단어·뜻·예문을 카드로 확인하고 앞뒤로 넘기며 자유롭게 학습하세요.</div>
+        </div>
+      </div>
+      <div class="flow-step-big">
+        <div class="fsb-num fsb-2">2</div>
+        <div class="fsb-card fsb-2-card">
+          <div class="fsb-name">퀴즈</div>
+          <span class="fsb-pass fp-purple">80점 통과</span>
+          <div class="fsb-desc">4지선다 객관식으로 단어 뜻을 확인합니다. 80점 이상이어야 다음 단계로 넘어가요.</div>
+        </div>
+      </div>
+      <div class="flow-step-big">
+        <div class="fsb-num fsb-3">3</div>
+        <div class="fsb-card fsb-3-card">
+          <div class="fsb-name">스펠링</div>
+          <span class="fsb-pass fp-purple">80점 통과</span>
+          <div class="fsb-desc">뜻을 보고 영어 단어를 직접 입력합니다. 80점 이상이어야 다음 단계로 넘어가요.</div>
+        </div>
+      </div>
+      <div class="flow-step-big">
+        <div class="fsb-num fsb-4">4</div>
+        <div class="fsb-card fsb-4-card">
+          <div class="fsb-name">매칭</div>
+          <span class="fsb-pass" style="background:white; color:#1E3A5F;">90점 통과</span>
+          <div class="fsb-desc" style="color:rgba(255,255,255,0.85); border-top:1px solid rgba(255,255,255,0.15);">단어와 뜻을 연결하는 최종 단계. 90점 이상이어야 1회독 완료!</div>
+        </div>
+      </div>
+    </div>
+
+    </div><!-- /1회독 -->
+
+    <!-- 2회독 -->
+    <div class="round-wrapper round-wrapper-2">
+      <div class="round-label">
+        <span class="round-label-badge rlb-2">2회독</span>
+        <span class="round-label-title">완전 정복</span>
+        <span class="round-label-desc">심화 학습 · AI 채점</span>
+      </div>
+    <div class="flow-steps-big round2">
+      <div class="flow-step-big">
+        <div class="fsb-num" style="background:white; color:var(--gray-800);">5</div>
+        <div class="fsb-card" style="background:white; border-top:4px solid #A78BFA;">
+          <div class="fsb-name">플래시카드 심화</div>
+          <span class="fsb-pass" style="background:white; color:#7C3AED; border:1.5px solid #7C3AED; display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; margin-bottom:10px;">유의어·반의어·숙어</span>
+          <div class="fsb-desc">유의어, 반의어, 숙어까지 확장 학습합니다. 단어의 쓰임새를 폭넓게 익히세요.</div>
+        </div>
+      </div>
+      <div class="flow-step-big">
+        <div class="fsb-num" style="background:white; color:var(--gray-800);">6</div>
+        <div class="fsb-card" style="background:white; border-top:4px solid #7C3AED;">
+          <div class="fsb-name">종합문제</div>
+          <span class="fsb-pass" style="background:white; color:#7C3AED; border:1.5px solid #7C3AED; display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; margin-bottom:10px;">9가지 유형</span>
+          <div class="fsb-desc">9가지 유형의 종합문제로<br>단어를 다각도로 확인합니다.<br>AI가 영작 답안을 직접 채점합니다.</div>
+        </div>
+      </div>
+      <div class="flow-step-big">
+        <div class="fsb-num" style="background:white; color:var(--gray-800);">7</div>
+        <div class="fsb-card" style="background:#3B0764; border-top:4px solid #7C3AED; color:white;">
+          <div class="fsb-name" style="color:white;">심화 매칭</div>
+          <span class="fsb-pass" style="background:white; color:#3B0764; display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; margin-bottom:10px;">2회독 완료</span>
+          <div class="fsb-desc" style="color:rgba(255,255,255,0.85);">심화 매칭으로 2회독을 마무리합니다.<br>여기까지 완료하면 진짜 내 단어!</div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /2회독 -->
+  </div>
+</section>
+
+<!-- ④ 학부모/학생 포인트 -->
+<section class="parent-section">
+  <div class="section-inner">
+    <div class="section-label">학부모 & 학생</div>
+    <h2 class="section-title">학부모도, 학생도<br><span class="purple">모두 만족하는 이유</span></h2>
+    <p class="section-desc">올킬보카는 학생의 자기주도 학습을 돕고,<br>학부모의 불안을 해소합니다.</p>
+
+    <div class="parent-grid">
+      <div class="parent-card">
+        <span class="pc-tag pct-parent">👨‍👩‍👧 학부모</span>
+        <h3 class="pc-title">우리 아이가<br>진짜 외웠는지 알 수 있어요</h3>
+        <p class="pc-desc">단순히 "공부했어요"가 아니라,<br>어떤 단어를 몇 번 틀렸는지,<br>몇 단계를 통과했는지 데이터로 확인하세요.</p>
+        <div class="pc-points">
+          <div class="pc-point">학습 완료 후 리포트 링크 바로 공유</div>
+          <div class="pc-point">틀린 단어 & 오답 횟수 상세 확인</div>
+          <div class="pc-point">단계별 통과 현황 한눈에 파악</div>
+          <div class="pc-point">별도 앱 설치 없이 링크 하나로 확인</div>
+        </div>
+      </div>
+
+      <div class="parent-card">
+        <span class="pc-tag pct-student">🎓 학생</span>
+        <h3 class="pc-title">게임처럼 하다 보면<br>단어가 머릿속에 남아요</h3>
+        <p class="pc-desc">4단계를 하나씩 통과하는 과정에서<br>성취감이 생깁니다.<br>지루한 암기가 아니라 클리어하는 재미로 공부하세요.</p>
+        <div class="pc-points">
+          <div class="pc-point">단계별 통과 기준으로 성취감 UP</div>
+          <div class="pc-point">틀린 단어만 반복 복습 시스템</div>
+          <div class="pc-point">수능 기출 단어 DB 완벽 커버</div>
+          <div class="pc-point">2회독 AI 서술형 채점으로 완전 정복</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ 숫자로 보는 올킬보카 -->
+<div class="stats-banner">
+  <div class="stats-inner">
+    <div class="stats-text">
+      <h2>지금 이 순간도<br>단어를 올킬 중</h2>
+      <p>올라영 학생들이 올킬보카로<br>수능 단어를 마스터하고 있어요</p>
+    </div>
+    <div class="stats-nums">
+      <div class="stat-num-item">
+        <div class="sni-num">7단계</div>
+        <div class="sni-label">2회독 완전 정복 시스템</div>
+      </div>
+      <div class="stat-num-item">
+        <div class="sni-num">AI</div>
+        <div class="sni-label">서술형 영작 자동 채점</div>
+      </div>
+      <div class="stat-num-item">
+        <div class="sni-num">90점</div>
+        <div class="sni-label">매칭 통과 기준</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑥ 가격 -->
+<section class="price-section">
+  <div class="section-inner">
+    <div class="section-label">가격 안내</div>
+    <h2 class="section-title">부담 없이 <span class="purple">시작하세요.</span></h2>
+    <p class="section-desc">1주 무료 체험 후 결정하세요.</p>
+
+    <div class="price-cards">
+
+      <div class="price-card featured">
+        <div class="pc-popular">🐣 얼리버드 특가</div>
+        <div class="price-plan">개인 구독</div>
+        <div class="price-main">월 9,900<span>원</span></div>
+        <div class="price-sub"><s style="color:rgba(0,0,0,0.3);">정가 17,000원</s> → <b style="color:#7C3AED;">얼리버드 특가</b></div>
+        <div style="background:#FEF9C3; border:1px solid #FDE047; border-radius:10px; padding:10px 14px; font-size:12px; color:#713F12; line-height:1.6; margin: 12px 0;">
+          📚 현재 수록 단어: 고1·2·3 3월 모의고사<br>각 학년 1–2과 단어 제공 중 (업데이트 예정)
+        </div>
+        <div class="price-divider"></div>
+        <div class="price-features">
+          <div class="pf-item">수록 단어 전체 무제한 이용</div>
+          <div class="pf-item">1회독 + 2회독 전체</div>
+          <div class="pf-item">AI 서술형 채점</div>
+          <div class="pf-item">학부모 리포트 공유</div>
+          <div class="pf-item">틀린 단어 복습 시스템</div>
+        </div>
+        <button class="btn-plan btn-plan-fill">지금 시작하기 →</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-plan">학원 단체</div>
+        <div class="price-main">문의<span>하기</span></div>
+        <div class="price-sub">학원/그룹 맞춤 견적</div>
+        <div class="price-divider"></div>
+        <div class="price-features">
+          <div class="pf-item">학생 수 맞춤 가격</div>
+          <div class="pf-item">선생님용 관리 대시보드</div>
+          <div class="pf-item">일괄 리포트 관리</div>
+          <div class="pf-item">전담 고객 지원</div>
+        </div>
+        <button class="btn-plan btn-plan-outline">학원 문의하기</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ 최종 CTA -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2>지금 바로<br><span style="color:#FEF08A;">올킬 시작</span>하세요</h2>
+    <p>1주 무료 체험, 언제든 취소 가능.<br>수능 영어 단어, 이번엔 진짜로 끝냅니다.</p>
+  </div>
+</section>
+
+
+</body>
+</html>

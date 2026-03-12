@@ -607,15 +607,15 @@ export default function AllkillPage() {
           <div style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -80, left: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(91,33,182,0.2)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 2, maxWidth: 600, margin: '0 auto' }}>
-            <h2 style={{ fontSize: 40, fontWeight: 900, color: 'white', marginBottom: 16, lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 900, color: 'white', marginBottom: 16, lineHeight: 1.3 }}>
               지금 바로<br /><span style={{ color: '#FEF08A' }}>올킬 시작</span>하세요
             </h2>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 40, lineHeight: 1.7 }}>
+            <p style={{ fontSize: 'clamp(16px, 1.5vw, 20px)', color: 'rgba(255,255,255,0.75)', marginBottom: 40, lineHeight: 1.7 }}>
               1주 무료 체험, 언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
             </p>
             <a
               href="#price"
-              style={{ display: 'inline-block', background: 'white', color: C.lavenderDark, fontSize: 16, fontWeight: 700, padding: '16px 40px', borderRadius: 12, textDecoration: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
+              style={{ display: 'inline-block', background: 'white', color: C.lavenderDark, fontSize: 18, fontWeight: 700, padding: '18px 48px', borderRadius: 14, textDecoration: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
             >
               무료 체험 시작하기 →
             </a>
