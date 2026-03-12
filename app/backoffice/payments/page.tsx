@@ -21,6 +21,7 @@ interface IntegratedPayment {
   receipt_url?: string;
   customer_name?: string;
   customer_phone?: string;
+  customer_email?: string;
   // 수동 결제 전용
   category?: string;  // TUITION, MATERIAL
   memo?: string;
@@ -722,6 +723,7 @@ export default function PaymentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제일</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">학생명</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">연락처</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">이메일</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">강좌명</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">구분</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제수단</th>
@@ -755,6 +757,12 @@ export default function PaymentsPage() {
                           ? (payment.customer_phone || payment.student?.parent_phone || '-')
                           : (payment.student?.parent_phone || '-')
                         }
+                      </p>
+                    </td>
+                    {/* 이메일 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-slate-600">
+                        {payment.type === 'PG' ? (payment.customer_email || '-') : '-'}
                       </p>
                     </td>
                     {/* 강좌명 */}

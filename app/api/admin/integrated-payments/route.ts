@@ -21,6 +21,7 @@ interface IntegratedPayment {
   receipt_url?: string;
   customer_name?: string;
   customer_phone?: string;
+  customer_email?: string;
   // 수동 결제 전용 필드
   category?: string;
   memo?: string;
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
           paid_at,
           customer_name,
           customer_phone,
+          customer_email,
           students (id, student_name, parent_phone),
           courses (id, title, price)
         `)
@@ -114,6 +116,7 @@ export async function GET(request: NextRequest) {
       receipt_url: p.receipt_url,
       customer_name: p.customer_name,
       customer_phone: p.customer_phone,
+      customer_email: p.customer_email,
     }));
 
     // 수동 결제 데이터 변환 (자체 컬럼 우선, 없으면 students 관계 사용)
