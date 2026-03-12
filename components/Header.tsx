@@ -141,6 +141,18 @@ export default function Header() {
               <span className="absolute -top-2 -right-1 bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">NEW</span>
               ✦ 올킬보카
             </a>
+            {/* 올킬보카 시작하기 버튼 */}
+            <a
+              href="https://voca.allrounderenglish.co.kr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 px-5 py-2.5 text-sm font-bold rounded-full transition-all duration-200 border-2"
+              style={{ color: '#7C3AED', borderColor: '#A78BFA', background: 'white' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#F5F3FF'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'white'; }}
+            >
+              시작하기
+            </a>
             {/* 레벨테스트 버튼 */}
             <a
               href="/leveltest"
@@ -239,6 +251,17 @@ export default function Header() {
           >
             <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full leading-none whitespace-nowrap">NEW</span>
             ✦ 올킬보카
+          </a>
+          {/* 올킬보카 시작하기 버튼 (모바일) */}
+          <a
+            href="https://voca.allrounderenglish.co.kr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-3 px-4 py-3 text-base font-bold text-center rounded-full transition-all border-2"
+            style={{ color: '#7C3AED', borderColor: '#A78BFA', background: 'white' }}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            올킬보카 시작하기
           </a>
           {/* 레벨테스트 버튼 */}
           <a

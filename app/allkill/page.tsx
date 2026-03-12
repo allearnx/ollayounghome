@@ -614,10 +614,12 @@ export default function AllkillPage() {
               1주 무료 체험, 언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
             </p>
             <a
-              href="#price"
+              href="https://voca.allrounderenglish.co.kr"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ display: 'inline-block', background: 'white', color: C.lavenderDark, fontSize: 18, fontWeight: 700, padding: '18px 48px', borderRadius: 14, textDecoration: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
             >
-              무료 체험 시작하기 →
+              올킬보카 시작하기 →
             </a>
           </div>
         </section>
