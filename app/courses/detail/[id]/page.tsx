@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { Course, Teacher, CATEGORY_LABELS } from '@/lib/domain';
@@ -28,6 +28,10 @@ export default function CourseDetailPage() {
   // 고객 정보 입력 상태
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+
+  // autofill 대응: DOM 값을 직접 읽기 위한 refs
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -68,10 +72,16 @@ export default function CourseDetailPage() {
     setIsCreatingOrder(true);
     
     try {
-      if (!customerName.trim()) {
+      // autofill 대응: DOM 실제 값을 읽어서 검증 및 state 동기화
+      const nameVal = (nameRef.current?.value ?? customerName).trim();
+      const phoneVal = (phoneRef.current?.value ?? customerPhone).trim();
+      if (nameVal !== customerName) setCustomerName(nameVal);
+      if (phoneVal !== customerPhone) setCustomerPhone(phoneVal);
+
+      if (!nameVal) {
         throw new Error('이름을 입력해주세요.');
       }
-      if (!customerPhone.trim()) {
+      if (!phoneVal) {
         throw new Error('연락처를 입력해주세요.');
       }
 
@@ -80,8 +90,8 @@ export default function CourseDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId: course.id,
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
+          customerName: nameVal,
+          customerPhone: phoneVal,
         }),
       });
       
@@ -415,9 +425,11 @@ export default function CourseDetailPage() {
                       학생이름 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      ref={nameRef}
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
+                      onInput={(e) => setCustomerName((e.currentTarget as HTMLInputElement).value)}
                       placeholder="홍길동"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                       required
@@ -428,9 +440,11 @@ export default function CourseDetailPage() {
                       학부모 연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      ref={phoneRef}
                       type="tel"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
+                      onInput={(e) => setCustomerPhone((e.currentTarget as HTMLInputElement).value)}
                       placeholder="010-1234-5678"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                       required

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import PaymentWidget from '@/components/PaymentWidget';
 
 // 올킬보카 DB 등록 후 여기에 courseId 입력
@@ -15,6 +15,11 @@ export default function AllkillPayButton() {
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  // autofill 대응: DOM 값을 직접 읽기 위한 refs
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+
   const closeModal = () => {
     setShowModal(false);
     setOrderId(null);
@@ -26,10 +31,21 @@ export default function AllkillPayButton() {
 
   const handleCreateOrder = async () => {
     setError(null);
-    if (!customerName.trim()) { setError('이름을 입력해주세요.'); return; }
-    if (!customerPhone.trim()) { setError('연락처를 입력해주세요.'); return; }
-    if (!customerEmail.trim()) { setError('이메일을 입력해주세요.'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) { setError('올바른 이메일 형식으로 입력해주세요.'); return; }
+
+    // autofill 대응: React state 대신 DOM 실제 값을 읽어서 검증
+    const nameVal = (nameRef.current?.value ?? customerName).trim();
+    const phoneVal = (phoneRef.current?.value ?? customerPhone).trim();
+    const emailVal = (emailRef.current?.value ?? customerEmail).trim();
+
+    // state가 autofill과 다를 수 있으므로 DOM 값으로 동기화
+    if (nameVal !== customerName) setCustomerName(nameVal);
+    if (phoneVal !== customerPhone) setCustomerPhone(phoneVal);
+    if (emailVal !== customerEmail) setCustomerEmail(emailVal);
+
+    if (!nameVal) { setError('이름을 입력해주세요.'); return; }
+    if (!phoneVal) { setError('연락처를 입력해주세요.'); return; }
+    if (!emailVal) { setError('이메일을 입력해주세요.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { setError('올바른 이메일 형식으로 입력해주세요.'); return; }
 
     setIsCreatingOrder(true);
     try {
@@ -38,9 +54,9 @@ export default function AllkillPayButton() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId: ALLKILL_COURSE_ID,
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          customerEmail: customerEmail.trim(),
+          customerName: nameVal,
+          customerPhone: phoneVal,
+          customerEmail: emailVal,
         }),
       });
       const data = await res.json();
@@ -112,9 +128,11 @@ export default function AllkillPayButton() {
                       이름 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      ref={nameRef}
                       type="text"
                       value={customerName}
                       onChange={e => setCustomerName(e.target.value)}
+                      onInput={e => setCustomerName((e.currentTarget as HTMLInputElement).value)}
                       placeholder="홍길동"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                     />
@@ -124,9 +142,11 @@ export default function AllkillPayButton() {
                       연락처 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      ref={phoneRef}
                       type="tel"
                       value={customerPhone}
                       onChange={e => setCustomerPhone(e.target.value)}
+                      onInput={e => setCustomerPhone((e.currentTarget as HTMLInputElement).value)}
                       placeholder="010-0000-0000"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                     />
@@ -136,9 +156,11 @@ export default function AllkillPayButton() {
                       이메일 <span className="text-red-500">*</span>
                     </label>
                     <input
+                      ref={emailRef}
                       type="email"
                       value={customerEmail}
                       onChange={e => setCustomerEmail(e.target.value)}
+                      onInput={e => setCustomerEmail((e.currentTarget as HTMLInputElement).value)}
                       placeholder="example@email.com"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
                     />
