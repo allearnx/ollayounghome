@@ -127,47 +127,64 @@ export default function AllkillPage() {
         .allkill-btn-white:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
 
         @media (max-width: 768px) {
-          .allkill-hero-title { font-size: 40px !important; }
-          .allkill-hero-desc { font-size: 32px !important; }
-          .allkill-section { padding: 64px 20px !important; }
-          .allkill-vocab-card-heading { font-size: 18px; }
-          .allkill-vocab-badge { font-size: 14px; padding: 8px 18px; }
-          .allkill-vocab-chip { font-size: 13px; padding: 7px 16px; }
+          .allkill-hero-title { font-size: 36px !important; line-height: 1.25 !important; }
+          .allkill-hero-desc { font-size: 24px !important; line-height: 1.6 !important; }
+          .allkill-section { padding: 56px 16px !important; }
+          .allkill-vocab-card-heading { font-size: 16px; }
+          .allkill-vocab-badge { font-size: 13px; padding: 7px 14px; }
+          .allkill-vocab-chip { font-size: 12px; padding: 6px 12px; }
           .allkill-vocab-grade { font-size: 13px; min-width: 24px; }
           .allkill-vocab-years { font-size: 11px; }
-          .allkill-vocab-subtitle { font-size: 16px; }
-          .allkill-vocab-desc { font-size: 14px; }
-          .allkill-bento { grid-template-columns: repeat(2, 1fr); }
+          .allkill-vocab-subtitle { font-size: 15px; }
+          .allkill-vocab-desc { font-size: 13px; }
+          .allkill-bento { grid-template-columns: repeat(2, 1fr); gap: 10px; }
           .allkill-bento-span2, .allkill-bento-span3 { grid-column: span 2; }
+          .allkill-bento-card { padding: 24px 20px !important; border-radius: 18px !important; }
           .allkill-flow-1 { grid-template-columns: repeat(2, 1fr) !important; }
           .allkill-flow-2 { grid-template-columns: 1fr 1fr !important; }
-          .allkill-parent-grid { grid-template-columns: 1fr; }
+          .allkill-parent-grid { grid-template-columns: 1fr; gap: 16px; }
           .allkill-stats-inner { flex-direction: column; align-items: flex-start; }
           .allkill-stats-nums { width: 100%; justify-content: space-between; gap: 10px; }
           .allkill-stat-item { padding: 20px 12px !important; flex: 1; }
           .allkill-stat-num { font-size: 28px !important; }
           .allkill-price-grid { grid-template-columns: 1fr; max-width: 100%; }
+          .allkill-price-card { padding: 28px 20px !important; }
           .allkill-vocab-bottom { grid-template-columns: 1fr; }
+          .allkill-vocab-bottom > div { padding: 24px 20px !important; }
           .allkill-round-label-desc { display: none; }
           .allkill-section-title { font-size: 26px !important; }
-          .allkill-final-cta h2 { font-size: 28px !important; }
-          .allkill-stats-text h2 { font-size: 24px !important; }
+          .allkill-final-cta { padding: 64px 20px !important; }
+          .allkill-final-cta h2 { font-size: 26px !important; }
+          .allkill-stats-text h2 { font-size: 22px !important; }
+          .allkill-persona-title { white-space: normal !important; font-size: 18px !important; }
+          .allkill-persona-desc { white-space: normal !important; font-size: 13px !important; }
+          .allkill-persona-card { padding: 28px 20px !important; }
+          .allkill-flow-card { padding: 20px 14px !important; }
+          .allkill-flow-desc { font-size: 12px !important; line-height: 1.65 !important; }
+          .allkill-flow-step-name { white-space: normal !important; font-size: 14px !important; }
         }
         @media (max-width: 600px) {
           .allkill-bento { grid-template-columns: 1fr; }
           .allkill-bento-span2, .allkill-bento-span3 { grid-column: span 1; }
         }
         @media (max-width: 480px) {
+          .allkill-hero-title { font-size: 28px !important; }
+          .allkill-hero-desc { font-size: 20px !important; }
           .allkill-flow-1 { grid-template-columns: 1fr !important; }
           .allkill-flow-2 { grid-template-columns: 1fr !important; }
-          .allkill-hero-title { font-size: 32px !important; }
+          .allkill-flow-round-badge { font-size: 13px !important; padding: 5px 12px !important; }
+          .allkill-flow-label-title { font-size: 15px !important; }
+        }
+
+        /* 수록 단어 카드 모바일 */
+        @media (max-width: 768px) {
+          .allkill-vocab-card { padding: 24px 20px !important; border-radius: 18px !important; }
         }
 
         /* 모바일 전용 패딩 오버라이드 */
         @media (max-width: 768px) {
-          .allkill-hero-section { padding: 80px 20px 60px !important; }
-          .allkill-stats-section { padding: 64px 20px !important; }
-          .allkill-final-cta { padding: 72px 20px !important; }
+          .allkill-hero-section { padding: 80px 16px 48px !important; }
+          .allkill-stats-section { padding: 48px 16px !important; }
           .allkill-stat-item { min-width: 0 !important; }
           .allkill-bento-report { display: none !important; }
         }
@@ -323,7 +340,7 @@ export default function AllkillPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
               {/* 중학 */}
-              <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 24, padding: '36px 40px', backdropFilter: 'blur(8px)', wordBreak: 'keep-all' }}>
+              <div className="allkill-vocab-card" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 24, padding: '36px 40px', backdropFilter: 'blur(8px)', wordBreak: 'keep-all' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 32 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
@@ -355,7 +372,7 @@ export default function AllkillPage() {
               </div>
 
               {/* 고등 모의고사 */}
-              <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 24, padding: '36px 40px', backdropFilter: 'blur(8px)', wordBreak: 'keep-all' }}>
+              <div className="allkill-vocab-card" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 24, padding: '36px 40px', backdropFilter: 'blur(8px)', wordBreak: 'keep-all' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 40 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
@@ -517,7 +534,7 @@ export default function AllkillPage() {
                   points: ['단계별 통과 기준으로 성취감 UP', '틀린 단어만 반복 복습 시스템', '수능 기출 단어 DB 완벽 커버', '2회독 AI 서술형 채점으로 완전 정복'],
                 },
               ].map((card) => (
-                <div key={card.tag} style={{ background: 'white', borderRadius: 24, padding: '44px 40px', border: '1px solid rgba(167,139,250,0.12)' }}>
+                <div key={card.tag} className="allkill-persona-card" style={{ background: 'white', borderRadius: 24, padding: '44px 40px', border: '1px solid rgba(167,139,250,0.12)' }}>
                   <span className="allkill-persona-tag" style={{ background: card.tagBg, color: card.tagColor }}>{card.tag}</span>
                   <h3 className="allkill-persona-title" style={{ color: C.gray800 }}>{card.title}</h3>
                   <p className="allkill-persona-desc" style={{ color: C.gray400 }}>{card.desc}</p>
