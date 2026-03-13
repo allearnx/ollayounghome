@@ -52,7 +52,6 @@ export async function activateVoca(params: {
       .select('id')
       .eq('student_id', userId)
       .eq('service', 'voca')
-      .eq('is_active', true)
       .maybeSingle();
 
     if (existing) {
@@ -64,7 +63,6 @@ export async function activateVoca(params: {
       student_id: userId,
       service: 'voca',
       assigned_by: userId,
-      is_active: true,
     });
 
     if (assignError) {
