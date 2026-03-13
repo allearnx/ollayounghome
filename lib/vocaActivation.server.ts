@@ -29,49 +29,22 @@ export async function activateVoca(params: {
     const supabase = getAllGrammarSupabaseAdmin();
     let userId: string;
 
-    // 1. Supabase Auth에 계정 생성 (이미 있으면 기존 계정 사용)
-    const { data: authData, error: createError } = await supabase.auth.admin.createUser({
-      email,
-      password: phone.replace(/\D/g, ''), // 하이픈 제거, 숫자만 (010-xxxx-xxxx → 01012345678)
-      email_confirm: true,
-      user_metadata: { name, phone },
+    // 1. RPC로 auth.users + public.users 생성 (트리거 자동 실행)
+    //    이미 있으면 기존 ID 반환, 없으면 새로 생성
+    const { data: rpcUserId, error: rpcError } = await supabase.rpc('create_voca_user', {
+      _email: email,
+      _password: phone.replace(/\D/g, ''),
+      _name: name,
+      _phone: phone,
     });
 
-    if (createError) {
-      // 이미 가입된 이메일인 경우 기존 유저 ID 조회
-      if (createError.message?.includes('already been registered') || createError.message?.includes('already exists')) {
-        const { data: existingUsers } = await supabase.auth.admin.listUsers();
-        const existingUser = existingUsers?.users?.find(u => u.email === email);
-        if (!existingUser) {
-          console.error(`[vocaActivation] 기존 유저 조회 실패 (orderId: ${orderId}):`, createError);
-          return;
-        }
-        userId = existingUser.id;
-        console.log(`[vocaActivation] 기존 계정 사용 (email: ${email}, userId: ${userId})`);
-      } else {
-        console.error(`[vocaActivation] Auth 계정 생성 실패 (orderId: ${orderId}):`, createError);
-        return;
-      }
-    } else {
-      userId = authData.user.id;
-      console.log(`[vocaActivation] 신규 계정 생성 완료 (email: ${email}, userId: ${userId})`);
+    if (rpcError) {
+      console.error(`[vocaActivation] 계정 생성 RPC 실패 (orderId: ${orderId}):`, rpcError);
+      return;
     }
 
-    // 2. users 테이블에 프로필 생성 (이미 있으면 무시)
-    const { error: upsertError } = await supabase.from('users').upsert(
-      {
-        id: userId,
-        email,
-        full_name: name,
-        role: 'student',
-        is_active: true,
-      },
-      { onConflict: 'id', ignoreDuplicates: true }
-    );
-
-    if (upsertError) {
-      console.error(`[vocaActivation] users 테이블 upsert 실패 (orderId: ${orderId}):`, upsertError);
-    }
+    userId = rpcUserId;
+    console.log(`[vocaActivation] 계정 준비 완료 (email: ${email}, userId: ${userId})`);
 
     // 3. voca 서비스 활성화 (중복 삽입 방지)
     const { data: existing } = await supabase
