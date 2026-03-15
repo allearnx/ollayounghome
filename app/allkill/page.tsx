@@ -815,7 +815,7 @@ export default function AllkillPage() {
             <div style={{ maxWidth: 320, margin: '0 auto' }}>
               <AllkillPayButton />
             </div>
-            <p style={{ marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>이미 구독 중이신가요? <a href="https://app.allrounderenglish.co.kr" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'underline' }}>바로 접속하기</a></p>
+            <p style={{ marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>이미 구독 중이신가요? <a href="https://voca.allrounderenglish.co.kr/login" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'underline' }}>바로 접속하기</a></p>
           </div>
         </section>
       </main>
