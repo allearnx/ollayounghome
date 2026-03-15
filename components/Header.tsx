@@ -143,7 +143,7 @@ export default function Header() {
             </a>
             {/* 올킬보카 시작하기 버튼 */}
             <a
-              href="https://voca.allrounderenglish.co.kr"
+              href="https://voca.allrounderenglish.co.kr/login"
               target="_blank"
               rel="noopener noreferrer"
               className="ml-2 px-5 py-2.5 text-sm font-bold rounded-full transition-all duration-200 border-2"
@@ -254,7 +254,7 @@ export default function Header() {
           </a>
           {/* 올킬보카 시작하기 버튼 (모바일) */}
           <a
-            href="https://voca.allrounderenglish.co.kr"
+            href="https://voca.allrounderenglish.co.kr/login"
             target="_blank"
             rel="noopener noreferrer"
             className="block mt-3 px-4 py-3 text-base font-bold text-center rounded-full transition-all border-2"
