@@ -640,7 +640,7 @@ export default function AllkillPage() {
                   ))}
                 </div>
 
-                <a href="https://voca.allrounderenglish.co.kr" target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                <a href="https://voca.allrounderenglish.co.kr/login" target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
                   <button className="allkill-price-btn" style={{ border: '1.5px solid #22C55E', background: 'transparent', color: '#16A34A', fontWeight: 700 }}>
                     무료로 시작하기 →
                   </button>
