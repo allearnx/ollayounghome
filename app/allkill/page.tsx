@@ -117,7 +117,8 @@ export default function AllkillPage() {
         .allkill-flow-2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .allkill-parent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
         .allkill-stats-inner { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
-        .allkill-price-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 800px; margin: 0 auto; }
+        .allkill-price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 1024px) { .allkill-price-grid { grid-template-columns: repeat(2, 1fr); } }
         .allkill-vocab-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
         .allkill-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(167,139,250,0.12); }
@@ -586,6 +587,31 @@ export default function AllkillPage() {
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 18px)', color: C.gray400, lineHeight: 1.8, marginBottom: 56 }}>지금 바로 시작하세요.</p>
 
             <div className="allkill-price-grid">
+              {/* 무료 플랜 */}
+              <div className="allkill-price-card" style={{ borderRadius: 20, padding: '40px 36px', border: '2px solid #E5E7EB', background: '#FAFAFA', transition: 'transform 0.2s' }}>
+                <div className="allkill-price-plan-label" style={{ color: C.gray400 }}>무료 플랜</div>
+                <div className="allkill-montserrat allkill-price-amount" style={{ color: C.gray800 }}>무료<span className="allkill-price-amount-unit" style={{ color: C.gray400, fontSize: 16 }}></span></div>
+                <div className="allkill-price-subtitle" style={{ color: C.gray400 }}>회원가입 후 바로 이용</div>
+                <div style={{ height: 1, background: '#F2F0FF', marginBottom: 28 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 36 }}>
+                  {['최근 4개년 수능·모의고사 기출', '1회독 학습 (플래시카드·퀴즈·스펠링·매칭)', '틀린 단어 복습 시스템'].map((f) => (
+                    <div key={f} className="allkill-price-feature" style={{ display: 'flex', alignItems: 'center', gap: 12, color: C.gray600 }}>
+                      <span style={{ color: '#4DD9C0', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✓</span> {f}
+                    </div>
+                  ))}
+                  {['2회독 심화 학습', 'AI 서술형 채점', '학부모 리포트'].map((f) => (
+                    <div key={f} className="allkill-price-feature" style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#D1D5DB' }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✕</span> {f}
+                    </div>
+                  ))}
+                </div>
+                <a href="https://voca.allrounderenglish.co.kr" target="_blank" rel="noopener noreferrer">
+                  <button className="allkill-price-btn" style={{ border: '1.5px solid #D1D5DB', background: 'transparent', color: C.gray600 }}>
+                    무료로 시작하기 →
+                  </button>
+                </a>
+              </div>
+
               {/* 개인 구독 */}
               <div className="allkill-price-card" style={{ borderRadius: 20, padding: '40px 36px', border: `2px solid ${C.lavender}`, boxShadow: '0 16px 48px rgba(167,139,250,0.18)', position: 'relative', transition: 'transform 0.2s' }}>
                 <div style={{ position: 'absolute', top: -15, left: '50%', transform: 'translateX(-50%)', background: C.lavender, color: 'white', fontSize: 13, fontWeight: 700, padding: '5px 18px', borderRadius: 100, whiteSpace: 'nowrap' }}>🐣 얼리버드 특가</div>
