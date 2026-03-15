@@ -594,11 +594,29 @@ export default function AllkillPage() {
                 <div className="allkill-price-subtitle" style={{ color: C.gray400 }}>회원가입 후 바로 이용</div>
                 <div style={{ height: 1, background: '#F2F0FF', marginBottom: 28 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 36 }}>
-                  {['최근 4개년 수능·모의고사 기출', '1회독 학습 (플래시카드·퀴즈·스펠링·매칭)', '틀린 단어 복습 시스템'].map((f) => (
+                  {['최근 4개년 수능·모의고사 기출', '틀린 단어 복습 시스템'].map((f) => (
                     <div key={f} className="allkill-price-feature" style={{ display: 'flex', alignItems: 'center', gap: 12, color: C.gray600 }}>
                       <span style={{ color: '#4DD9C0', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✓</span> {f}
                     </div>
                   ))}
+                  {/* 1회독 단계 */}
+                  <div style={{ background: '#F5F3FF', borderRadius: 10, padding: '12px 16px', marginTop: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.lavenderDark, marginBottom: 8, letterSpacing: '0.5px' }}>1회독 포함 학습</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { step: '01', name: '플래시카드', note: '자유 학습' },
+                        { step: '02', name: '퀴즈', note: '80점 통과' },
+                        { step: '03', name: '스펠링', note: '80점 통과' },
+                        { step: '04', name: '매칭', note: '90점 통과' },
+                      ].map((s) => (
+                        <div key={s.step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 900, color: 'white', background: C.lavenderDark, borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>{s.step}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.gray600 }}>{s.name}</span>
+                          <span style={{ fontSize: 11, color: C.gray400, marginLeft: 'auto' }}>{s.note}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   {['2회독 심화 학습', 'AI 서술형 채점', '학부모 리포트'].map((f) => (
                     <div key={f} className="allkill-price-feature" style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#D1D5DB' }}>
                       <span style={{ fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✕</span> {f}
@@ -625,11 +643,32 @@ export default function AllkillPage() {
                 </div>
                 <div style={{ height: 1, background: '#F2F0FF', marginBottom: 28 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 36 }}>
-                  {['수록 단어 전체 무제한 이용', '1회독 + 2회독 전체', 'AI 서술형 채점', '학부모 리포트 공유', '틀린 단어 복습 시스템'].map((f) => (
+                  {['수록 단어 전체 무제한 이용', 'AI 서술형 채점', '학부모 리포트 공유', '틀린 단어 복습 시스템'].map((f) => (
                     <div key={f} className="allkill-price-feature" style={{ display: 'flex', alignItems: 'center', gap: 12, color: C.gray600 }}>
                       <span style={{ color: '#4DD9C0', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>✓</span> {f}
                     </div>
                   ))}
+                  {/* 1회독 + 2회독 단계 */}
+                  <div style={{ background: '#F5F3FF', borderRadius: 10, padding: '12px 16px', marginTop: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.lavenderDark, marginBottom: 8, letterSpacing: '0.5px' }}>1회독 + 2회독 전체 포함</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { step: '01', name: '플래시카드', note: '자유 학습', round: 1 },
+                        { step: '02', name: '퀴즈', note: '80점 통과', round: 1 },
+                        { step: '03', name: '스펠링', note: '80점 통과', round: 1 },
+                        { step: '04', name: '매칭', note: '90점 통과', round: 1 },
+                        { step: '05', name: '플래시카드 심화', note: '유의어·반의어', round: 2 },
+                        { step: '06', name: '종합문제', note: 'AI 영작 채점', round: 2 },
+                        { step: '07', name: '심화 매칭', note: '2회독 완료', round: 2 },
+                      ].map((s) => (
+                        <div key={s.step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 900, color: 'white', background: s.round === 2 ? C.lavenderDark : '#0891B2', borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>{s.step}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.gray600 }}>{s.name}</span>
+                          <span style={{ fontSize: 11, color: C.gray400, marginLeft: 'auto' }}>{s.note}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <AllkillPayButton />
               </div>
