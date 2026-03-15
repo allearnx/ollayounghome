@@ -583,7 +583,7 @@ export default function AllkillPage() {
             <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 48px)', fontWeight: 900, color: C.gray800, lineHeight: 1.3, marginBottom: 14 }}>
               부담 없이 <span style={{ color: C.lavenderDark }}>시작하세요.</span>
             </h2>
-            <p style={{ fontSize: 'clamp(15px, 1.4vw, 18px)', color: C.gray400, lineHeight: 1.8, marginBottom: 56 }}>1주 무료 체험 후 결정하세요.</p>
+            <p style={{ fontSize: 'clamp(15px, 1.4vw, 18px)', color: C.gray400, lineHeight: 1.8, marginBottom: 56 }}>지금 바로 시작하세요.</p>
 
             <div className="allkill-price-grid">
               {/* 개인 구독 */}
@@ -728,7 +728,7 @@ export default function AllkillPage() {
               지금 바로<br /><span style={{ color: '#FEF08A' }}>올킬보카 시작</span>하세요
             </h2>
             <p style={{ fontSize: 'clamp(16px, 1.5vw, 20px)', color: 'rgba(255,255,255,0.75)', marginBottom: 40, lineHeight: 1.7 }}>
-              1주 무료 체험, 언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
+              언제든 취소 가능.<br />수능 영어 단어, 이번엔 진짜로 끝냅니다.
             </p>
             <div style={{ maxWidth: 320, margin: '0 auto' }}>
               <AllkillPayButton />
