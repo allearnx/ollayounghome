@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { CATEGORY_LABELS } from '@/lib/supabase';
+import { CATEGORY_LABELS } from '@/lib/domain';
 import { adminFetch } from '@/lib/adminApi.client';
 import { formatKRW } from '@/lib/utils';
 

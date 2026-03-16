@@ -3,8 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase.server';
 import { confirmTossPayment } from '@/lib/toss.server';
 import { updateStudentPaidIfExists } from '@/lib/paymentTransition.server';
 import { activateVoca } from '@/lib/vocaActivation.server';
-
-const ALLKILL_COURSE_ID = '5ff21cf6-1fce-4a4e-b674-d4f099ee3368';
+import { ALLKILL_COURSE_ID } from '@/lib/constants';
 
 // POST: 결제 승인 요청
 export async function POST(request: NextRequest) {

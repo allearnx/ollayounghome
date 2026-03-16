@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
+import { FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/domain';
 import AdminLayout from '@/components/AdminLayout';
 import { adminFetch } from '@/lib/adminApi.client';
 

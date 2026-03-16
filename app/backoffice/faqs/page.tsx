@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/supabase';
+import { FAQ, FAQ_CATEGORY_LABELS, FAQCategory } from '@/lib/domain';
 import AdminLayout from '@/components/AdminLayout';
 import { adminFetch } from '@/lib/adminApi.client';
 
