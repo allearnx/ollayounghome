@@ -23,6 +23,8 @@ interface IntegratedPayment {
   customer_name?: string;
   customer_phone?: string;
   customer_email?: string;
+  voca_activated?: boolean;
+  voca_activated_at?: string | null;
   // 수동 결제 전용
   category?: string;  // TUITION, MATERIAL
   memo?: string;
@@ -716,6 +718,7 @@ export default function PaymentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">결제수단</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">금액</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">상태</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">올킬계정</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">관리</th>
                 </tr>
               </thead>
@@ -784,6 +787,18 @@ export default function PaymentsPage() {
                     {/* 상태 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(payment.status)}
+                    </td>
+                    {/* 올킬보카 계정 활성화 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {payment.type === 'PG' && payment.status === 'paid' && payment.voca_activated !== undefined ? (
+                        payment.voca_activated ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-violet-100 text-violet-700 rounded-full">✓ 생성됨</span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-bold bg-red-100 text-red-700 rounded-full">⚠ 미생성</span>
+                        )
+                      ) : (
+                        <span className="text-slate-300 text-xs">—</span>
+                      )}
                     </td>
                     {/* 관리 */}
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
 
     // 5. 올킬보카 결제 시 계정 자동 생성 및 서비스 활성화
     if (payment.course_id === ALLKILL_COURSE_ID && payment.customer_email) {
+      let vocaOk = false;
       try {
         await activateVoca({
           name: payment.customer_name || '',
@@ -106,10 +107,20 @@ export async function POST(request: NextRequest) {
           phone: payment.customer_phone || '',
           orderId,
         });
+        vocaOk = true;
       } catch (vocaError) {
         // 계정 활성화 실패는 결제 성공 응답에 영향 없이 로그만 기록
         console.error('[confirm] activateVoca 실패 (결제는 완료):', vocaError);
       }
+
+      // 활성화 성공/실패 여부를 DB에 기록 (관리자가 미처리 건 파악 가능)
+      await supabase
+        .from('payments')
+        .update({
+          voca_activated: vocaOk,
+          voca_activated_at: vocaOk ? new Date().toISOString() : null,
+        })
+        .eq('order_id', orderId);
     }
 
     return NextResponse.json({

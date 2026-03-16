@@ -22,6 +22,8 @@ interface IntegratedPayment {
   customer_name?: string;
   customer_phone?: string;
   customer_email?: string;
+  voca_activated?: boolean;
+  voca_activated_at?: string | null;
   // 수동 결제 전용 필드
   category?: string;
   memo?: string;
@@ -56,6 +58,8 @@ export async function GET(request: NextRequest) {
           customer_name,
           customer_phone,
           customer_email,
+          voca_activated,
+          voca_activated_at,
           students (id, student_name, parent_phone),
           courses (id, title, price)
         `)
@@ -117,6 +121,8 @@ export async function GET(request: NextRequest) {
       customer_name: p.customer_name,
       customer_phone: p.customer_phone,
       customer_email: p.customer_email,
+      voca_activated: p.voca_activated,
+      voca_activated_at: p.voca_activated_at,
     }));
 
     // 수동 결제 데이터 변환 (자체 컬럼 우선, 없으면 students 관계 사용)
