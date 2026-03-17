@@ -17,6 +17,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       .from('courses')
       .select(`*, teachers (*)`)
       .eq('id', courseId)
+      .eq('is_active', true)
       .single();
 
     if (error || !data) {

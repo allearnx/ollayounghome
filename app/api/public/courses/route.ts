@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('courses')
       .select(`*, teachers (*)`)
+      .eq('is_active', true)
       .order('created_at', { ascending: false });
 
     if (category) {
