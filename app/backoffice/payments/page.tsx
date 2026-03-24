@@ -61,7 +61,7 @@ export default function PaymentsPage() {
     try {
       // 통합 결제 내역과 학생/강좌 목록을 병렬로 조회
       const [paymentsRes, overviewRes] = await Promise.all([
-        adminFetch('/api/admin/integrated-payments?limit=100', {
+        adminFetch('/api/admin/integrated-payments?limit=500', {
           cache: 'no-store',
         }),
         adminFetch('/api/admin/overview?limit=50', {

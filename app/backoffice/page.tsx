@@ -9,6 +9,7 @@ export default function AdminPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string>('');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
@@ -53,8 +54,12 @@ export default function AdminPage() {
 
       setStudents(consultationStudents);
       setCourses(courseData || []);
+      setFetchError('');
     } catch (err) {
       console.error('Error fetching students:', err);
+      const message =
+        err instanceof Error ? err.message : '상담 신청 목록을 불러오지 못했습니다.';
+      setFetchError(message);
     } finally {
       if (!silent) {
         setIsLoading(false);
@@ -224,6 +229,12 @@ export default function AdminPage() {
           );
         })}
       </div>
+
+      {fetchError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {fetchError}
+        </div>
+      )}
 
       {/* 테이블 */}
       <div className="bg-white rounded-xl border border-violet-100 shadow-sm overflow-hidden">
