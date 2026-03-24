@@ -92,6 +92,9 @@ export const GRADE_OPTIONS = [
   { value: 'middle_1', label: '중등 1학년', short: '중1' },
   { value: 'middle_2', label: '중등 2학년', short: '중2' },
   { value: 'middle_3', label: '중등 3학년', short: '중3' },
+  { value: 'high_1', label: '고등 1학년', short: '고1' },
+  { value: 'high_2', label: '고등 2학년', short: '고2' },
+  { value: 'high_3', label: '고등 3학년', short: '고3' },
 ];
 
 // 학년 값으로 짧은 라벨 가져오기
