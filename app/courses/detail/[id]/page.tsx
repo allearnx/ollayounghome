@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { Course, Teacher, CATEGORY_LABELS } from '@/lib/domain';
+import PaymentWidget from '@/components/PaymentWidget';
 import { formatPrice } from '@/lib/utils';
-
-const PAYMENT_URL = 'https://www.allrounderenglish.co.kr/login?next=%2F';
 
 interface CourseWithTeacher extends Course {
   teachers: Teacher | null;
@@ -19,6 +18,20 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<CourseWithTeacher | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  
+  // 결제 관련 상태
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  
+  // 고객 정보 입력 상태
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+
+  // autofill 대응: DOM 값을 직접 읽기 위한 refs
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -49,6 +62,61 @@ export default function CourseDetailPage() {
       case 'voca': return 'bg-rose-500';
       default: return 'bg-slate-500';
     }
+  };
+
+  // 결제 모달 열기 - 주문 생성
+  const openPaymentModal = async () => {
+    if (!course) return;
+    
+    setPaymentError(null);
+    setIsCreatingOrder(true);
+    
+    try {
+      // autofill 대응: DOM 실제 값을 읽어서 검증 및 state 동기화
+      const nameVal = (nameRef.current?.value ?? customerName).trim();
+      const phoneVal = (phoneRef.current?.value ?? customerPhone).trim();
+      if (nameVal !== customerName) setCustomerName(nameVal);
+      if (phoneVal !== customerPhone) setCustomerPhone(phoneVal);
+
+      if (!nameVal) {
+        throw new Error('이름을 입력해주세요.');
+      }
+      if (!phoneVal) {
+        throw new Error('연락처를 입력해주세요.');
+      }
+
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: course.id,
+          customerName: nameVal,
+          customerPhone: phoneVal,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || '주문 생성에 실패했습니다.');
+      }
+      
+      setOrderId(data.orderId);
+      setShowPaymentModal(true);
+    } catch (error) {
+      console.error('Order creation error:', error);
+      setPaymentError(error instanceof Error ? error.message : '주문 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  // 결제 모달 닫기
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setOrderId(null);
+    setCustomerName('');
+    setCustomerPhone('');
   };
 
   if (isLoading) {
@@ -188,14 +256,16 @@ export default function CourseDetailPage() {
 
               {/* CTA 버튼 */}
               <div className="mt-6 space-y-3">
-                <a
-                  href={PAYMENT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full py-4 text-center text-lg font-bold text-white bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 rounded-full transition-all shadow-lg shadow-violet-300/30"
+                {/* 바로 결제 버튼 */}
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  disabled={isCreatingOrder}
+                  className="block w-full py-4 text-center text-lg font-bold text-white bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 rounded-full transition-all shadow-lg shadow-violet-300/30 disabled:opacity-50"
                 >
-                  {formatPrice(course.price)}원 수강 신청하기
-                </a>
+                  {isCreatingOrder ? '처리 중...' : `${formatPrice(course.price)}원 결제하기`}
+                </button>
+                
+                {/* 상담 신청 버튼 */}
                 <a
                   href="/#consultation-form"
                   className="block w-full py-4 text-center text-lg font-bold text-violet-600 bg-white border-2 border-violet-200 hover:border-violet-400 hover:bg-violet-50 rounded-full transition-all"
@@ -203,6 +273,12 @@ export default function CourseDetailPage() {
                   수강 상담 신청하기
                 </a>
               </div>
+              
+              {paymentError && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-600">{paymentError}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -309,6 +385,96 @@ export default function CourseDetailPage() {
         </div>
       </footer>
 
+      {/* 결제 모달 */}
+      {showPaymentModal && course && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 배경 오버레이 */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closePaymentModal}
+          />
+          
+          {/* 모달 컨텐츠 */}
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-xl font-bold text-slate-800">수강 결제</h3>
+              <button
+                onClick={closePaymentModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* 모달 바디 */}
+            <div className="p-6">
+              {/* 강좌 정보 */}
+              <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+                <p className="text-sm text-slate-500 mb-1">결제 강좌</p>
+                <p className="text-lg font-bold text-slate-800">{course.title}</p>
+              </div>
+              
+              {/* 고객 정보 입력 (주문 생성 전) */}
+              {!orderId && (
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      학생이름 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      ref={nameRef}
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      onInput={(e) => setCustomerName((e.currentTarget as HTMLInputElement).value)}
+                      placeholder="홍길동"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      학부모 연락처 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      ref={phoneRef}
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onInput={(e) => setCustomerPhone((e.currentTarget as HTMLInputElement).value)}
+                      placeholder="010-1234-5678"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={openPaymentModal}
+                    disabled={isCreatingOrder}
+                    className="w-full py-4 rounded-xl font-semibold text-white text-lg bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isCreatingOrder ? '주문 생성 중...' : `${formatPrice(course.price)}원 결제 진행`}
+                  </button>
+                </div>
+              )}
+              
+              {/* 결제 위젯 (주문 생성 후) */}
+              {orderId && (
+                <PaymentWidget
+                  amount={course.price}
+                  orderName={course.title}
+                  orderId={orderId}
+                  customerName={customerName}
+                  customerPhone={customerPhone}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
