@@ -123,7 +123,7 @@ export default function ReviewsPage() {
             지금 바로 상담 신청하고, 맞춤 학습 상담을 받아보세요
           </p>
           <Link
-            href="https://www.allrounderenglish.co.kr/#consultation-form"
+            href="/#consultation-form"
             className="inline-flex items-center gap-2 px-8 py-4 bg-violet-500 hover:bg-violet-600 text-white font-bold rounded-full transition-colors shadow-lg"
           >
             무료 상담 신청하기

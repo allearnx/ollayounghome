@@ -267,7 +267,7 @@ export default function CourseDetailPage() {
                 
                 {/* 상담 신청 버튼 */}
                 <a
-                  href="https://www.allrounderenglish.co.kr/#consultation-form"
+                  href="/#consultation-form"
                   className="block w-full py-4 text-center text-lg font-bold text-violet-600 bg-white border-2 border-violet-200 hover:border-violet-400 hover:bg-violet-50 rounded-full transition-all"
                 >
                   수강 상담 신청하기
@@ -333,7 +333,7 @@ export default function CourseDetailPage() {
             무료 상담을 통해 자세한 안내를 받아보세요!
           </p>
           <a
-            href="https://www.allrounderenglish.co.kr/#consultation-form"
+            href="/#consultation-form"
             className="inline-block px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all shadow-lg shadow-violet-300/30"
           >
             무료 상담 신청하기

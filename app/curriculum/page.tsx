@@ -221,7 +221,7 @@ export default function CurriculumPage() {
             무료 레벨테스트로 딱 맞는 강의를 추천받으세요!
           </p>
           <a
-            href="https://www.allrounderenglish.co.kr/#consultation-form"
+            href="/#consultation-form"
             className="inline-block px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-violet-400 to-purple-400 hover:from-violet-500 hover:to-purple-500 rounded-full transition-all shadow-lg shadow-violet-300/30"
           >
             무료 상담 신청하기
