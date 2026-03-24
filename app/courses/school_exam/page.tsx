@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Noto_Serif_KR, Nanum_Pen_Script } from 'next/font/google';
 import Header from '@/components/Header';
 import FooterSection from '@/app/allkill/_sections/FooterSection';
+import SinaeSinPayButton from '@/components/SinaeSinPayButton';
 
 const notoSerif = Noto_Serif_KR({ weight: ['700'], subsets: ['latin'], preload: false });
 const nanumPen = Nanum_Pen_Script({ weight: ['400'], preload: false });
@@ -31,7 +32,6 @@ export default function SchoolExamPage() {
           --radius-lg: 24px;
         }
         .sinaesin-serif { font-family: ${notoSerif.style.fontFamily}, serif; }
-        .sinaesin-pen { font-family: ${nanumPen.style.fontFamily}, cursive; }
 
         .sinaesin-hero {
           min-height: 100vh;
@@ -150,8 +150,8 @@ export default function SchoolExamPage() {
           .sinaesin-proof { padding: 16px 24px; }
           .sinaesin-proof-inner { flex-direction: column !important; gap: 12px !important; }
           .sinaesin-proof-divider { width: 24px !important; height: 1px !important; background: linear-gradient(90deg, transparent, #c9a84c, transparent) !important; border-radius: 0 !important; }
-          .sinaesin-compare-header, .sinaesin-compare-row { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
-          .sinaesin-compare-header div, .sinaesin-compare-row div { padding: 12px 8px !important; font-size: 0.72rem !important; }
+          .sinaesin-vs-grid { grid-template-columns: 1fr !important; }
+          .sinaesin-vs-badge { display: none !important; }
           .sinaesin-pricing-body { padding: 28px 24px !important; }
           .sinaesin-pricing-top { padding: 28px 24px !important; }
           .sinaesin-feature-card { grid-template-columns: 44px 1fr; gap: 20px; }
@@ -170,7 +170,7 @@ export default function SchoolExamPage() {
             <div className="sinaesin-anim" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--indigo-soft)', border: '1px solid rgba(99,102,241,0.2)', color: 'var(--indigo)', padding: '6px 18px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700, marginBottom: 40 }}>
               ✦ 올라영 × 올인내신
             </div>
-            <p className="sinaesin-pen sinaesin-anim" style={{ fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4, animationDelay: '0.08s' }}>
+            <p className="sinaesin-anim" style={{ fontFamily: nanumPen.style.fontFamily, fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4, animationDelay: '0.08s' }}>
               온라인으로 내신이 된다고요?
             </p>
             <h1 className="sinaesin-anim" style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-3px', color: 'var(--navy)', marginBottom: 4, animationDelay: '0.12s' }}>
@@ -274,31 +274,58 @@ export default function SchoolExamPage() {
               중3이 끝날 때 그 기반이 완성되어야 합니다.<br />올인내신은 거기까지 봅니다.
             </p>
 
-            <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 4px 32px rgba(0,0,0,0.05)' }}>
-              <div className="sinaesin-compare-header">
-                {['항목', '일반 학원', '혼자 공부', '올인내신'].map((h, i) => (
-                  <div key={h} style={{ padding: '18px 16px', fontSize: '0.82rem', fontWeight: 700, textAlign: 'center', color: i === 3 ? 'white' : 'rgba(255,255,255,0.5)', background: i === 3 ? 'var(--indigo)' : undefined, borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : undefined }}>
-                    {h}
+            {/* VS 카드 */}
+            <div className="sinaesin-vs-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 24, alignItems: 'center' }}>
+              {/* 기존 방식 */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '36px 32px' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-light)', textTransform: 'uppercase' as const, marginBottom: 20 }}>기존 방식</div>
+                {[
+                  '기초 반복 위주 — 틀리는 문제 유형을 파고들지 않음',
+                  '본문 암기에만 집중 — 변형 문제에 취약',
+                  '중학 문법 수준에서 멈춤',
+                  '자료의 질이 학원마다 천차만별',
+                  '오답 관리가 학생 개인 몫',
+                ].map((item) => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', color: '#ef4444', flexShrink: 0, marginTop: 1, fontWeight: 900 }}>✗</div>
+                    <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.65, wordBreak: 'keep-all' as const }}>{item}</span>
                   </div>
                 ))}
               </div>
-              {[
-                { label: '킬러 문제 집중 대비', vals: ['△', '✗', '✓'] },
-                { label: '학습 현황 관리', vals: ['✓', '✗', '✓'] },
-                { label: 'AI 변형 문제 제공', vals: ['✗', '✗', '✓'] },
-                { label: '고등 문법 선행', vals: ['△', '✗', '✓'] },
-                { label: '학군지 기출 제공', vals: ['△', '✗', '✓'] },
-                { label: '오답 누적 & 재출제', vals: ['✗', '✗', '✓'] },
-              ].map((row) => (
-                <div key={row.label} className="sinaesin-compare-row">
-                  <div style={{ padding: '16px', fontSize: '0.82rem', textAlign: 'left', color: 'var(--navy)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>{row.label}</div>
-                  {row.vals.map((v, i) => (
-                    <div key={i} style={{ padding: '16px', fontSize: '0.9rem', textAlign: 'center', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: i === 2 ? 'var(--indigo-soft)' : undefined, fontWeight: i === 2 ? 700 : 400, color: v === '✓' ? (i === 2 ? 'var(--navy)' : '#10b981') : v === '✗' ? '#cbd5e1' : '#f59e0b' }}>
-                      {v}
-                    </div>
-                  ))}
-                </div>
-              ))}
+
+              {/* VS 뱃지 */}
+              <div className="sinaesin-vs-badge" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.82rem', fontWeight: 900, letterSpacing: '0.05em' }}>VS</div>
+              </div>
+
+              {/* 올인내신 */}
+              <div style={{ background: 'var(--navy)', border: '1.5px solid rgba(201,168,76,0.4)', borderRadius: 'var(--radius-lg)', padding: '36px 32px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #c9a84c, #f0d080, #c9a84c, transparent)' }} />
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', color: '#c9a84c', textTransform: 'uppercase' as const, marginBottom: 20 }}>올인내신</div>
+                {[
+                  '킬러 문제만 집중 — 상위권이 실제로 틀리는 유형 반복',
+                  'AI 변형 문제로 어떤 변형도 대응 가능',
+                  '고등 문법까지 — 수능·내신 완벽 대비',
+                  '대치동 수준의 자료, 온라인으로',
+                  '오답 자동 누적 & 선생님이 직접 관리',
+                ].map((item) => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', color: '#c9a84c', flexShrink: 0, marginTop: 1, fontWeight: 900 }}>✓</div>
+                    <span style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.65, wordBreak: 'keep-all' as const }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 하단 강조 문구 */}
+            <div style={{ marginTop: 48, padding: '28px 24px', background: 'var(--indigo-soft)', borderRadius: 'var(--radius)', textAlign: 'center', border: '1px solid rgba(99,102,241,0.15)' }}>
+              <p style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', fontWeight: 700, color: 'var(--navy)', lineHeight: 1.7, wordBreak: 'keep-all' as const }}>
+                중3이 끝날 때,{' '}
+                <span style={{ color: 'var(--indigo-light)' }}>고등 영어의 기반이 완성</span>되어야 합니다.
+              </p>
+              <p style={{ marginTop: 8, fontWeight: 400, fontSize: '0.95rem', color: 'var(--text-muted)', wordBreak: 'keep-all' as const, lineHeight: 1.7 }}>
+                올인내신은 그 기반을 온라인에서 만들어 드립니다.
+              </p>
             </div>
           </div>
         </section>
@@ -344,10 +371,7 @@ export default function SchoolExamPage() {
                     </span>
                   </div>
                 ))}
-                <a href="#kakao" className="sinaesin-pricing-cta">
-                  상담 후 결제하기
-                  <span style={{ fontSize: '0.78rem', fontWeight: 400, opacity: 0.8, display: 'block', marginTop: 2 }}>카카오톡으로 먼저 문의해주세요</span>
-                </a>
+                <SinaeSinPayButton />
               </div>
             </div>
           </div>
@@ -366,12 +390,10 @@ export default function SchoolExamPage() {
               커리큘럼, 학습 방식, 현재 수준에서 시작 가능한지 — 무엇이든 편하게 물어보세요.
             </p>
             <a
-              href="http://pf.kakao.com/_xjVAxmG"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#FEE500', color: '#1a1a1a', padding: '16px 36px', borderRadius: 12, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: 36, textDecoration: 'none', transition: 'all 0.25s' }}
+              href="/#consultation-form"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'var(--navy)', color: 'white', padding: '16px 36px', borderRadius: 12, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: 36, textDecoration: 'none', transition: 'all 0.25s', boxShadow: '0 4px 20px rgba(30,27,75,0.18)' }}
             >
-              💬 카카오톡으로 문의하기
+              문의하기 →
             </a>
             <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-light)' }}>평일 AM 10:00 – PM 5:00 · 주말·공휴일 휴무</p>
           </div>
