@@ -160,6 +160,15 @@ export default function Header() {
             >
               레벨테스트
             </a>
+            {/* 로그인 버튼 */}
+            <a
+              href="https://learn.allrounderenglish.co.kr/start"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 px-5 py-2.5 text-sm font-medium text-[#1d1d1f] hover:text-[#0071e3] hover:bg-gray-100 rounded-full transition-all duration-200"
+            >
+              로그인
+            </a>
           </nav>
 
           {/* 모바일 햄버거 버튼 (lg 미만) */}
@@ -270,6 +279,16 @@ export default function Header() {
             onClick={() => setIsMenuOpen(false)}
           >
             레벨테스트 신청하기
+          </a>
+          {/* 로그인 버튼 */}
+          <a
+            href="https://learn.allrounderenglish.co.kr/start"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-3 px-4 py-3 text-base font-medium text-[#1d1d1f] text-center border border-gray-200 rounded-full hover:bg-gray-50 transition-all"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            로그인
           </a>
         </nav>
       </div>
