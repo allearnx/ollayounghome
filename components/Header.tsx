@@ -162,9 +162,7 @@ export default function Header() {
             </a>
             {/* 로그인 버튼 */}
             <a
-              href="https://learn.allrounderenglish.co.kr/start"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/start"
               className="ml-2 px-5 py-2.5 text-sm font-medium text-[#1d1d1f] hover:text-[#0071e3] hover:bg-gray-100 rounded-full transition-all duration-200"
             >
               로그인
@@ -282,9 +280,7 @@ export default function Header() {
           </a>
           {/* 로그인 버튼 */}
           <a
-            href="https://learn.allrounderenglish.co.kr/start"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/start"
             className="block mt-3 px-4 py-3 text-base font-medium text-[#1d1d1f] text-center border border-gray-200 rounded-full hover:bg-gray-50 transition-all"
             onClick={() => setIsMenuOpen(false)}
           >
