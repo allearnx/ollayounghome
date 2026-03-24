@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase.server';
 import { AdminAuthError, requireStaffOrAdmin } from '@/lib/adminAuth.server';
+import { sendTelegramMessage } from '@/lib/telegram.server';
 
 // GET: 모든 학생 목록 조회
 export async function GET(request: NextRequest) {
@@ -66,6 +67,34 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 텔레그램 상담 신청 알림
+    try {
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('title')
+        .in('id', interest_course_ids);
+
+      const courseNames = courses?.map((c) => c.title).join(', ') || '-';
+
+      const dateStr = new Date().toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      });
+
+      await sendTelegramMessage([
+        `📋 <b>상담 신청이 들어왔습니다!</b>`,
+        ``,
+        `👤 학생 이름: ${student_name.trim()}`,
+        `📚 학년: ${grade.trim()}`,
+        `📱 학부모 연락처: ${parent_phone}`,
+        `🎯 관심 강의: ${courseNames}`,
+        `🕐 신청 시각: ${dateStr}`,
+      ].join('\n'));
+    } catch (telegramError) {
+      console.error('[students] 텔레그램 알림 실패:', telegramError);
     }
 
     return NextResponse.json(data, { status: 201 });

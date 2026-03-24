@@ -4,6 +4,7 @@ import { confirmTossPayment } from '@/lib/toss.server';
 import { updateStudentPaidIfExists } from '@/lib/paymentTransition.server';
 import { activateVoca } from '@/lib/vocaActivation.server';
 import { ALLKILL_COURSE_ID } from '@/lib/constants';
+import { sendTelegramMessage, buildPaymentNotification } from '@/lib/telegram.server';
 
 // POST: 결제 승인 요청
 export async function POST(request: NextRequest) {
@@ -93,10 +94,33 @@ export async function POST(request: NextRequest) {
       // 결제는 성공했으나 DB 업데이트 실패 - 로그 기록 필요
     }
 
-    // 4. 학생 상태 업데이트 (결제 완료)
+    // 4. 텔레그램 알림 전송
+    try {
+      const { data: courseData } = await supabase
+        .from('courses')
+        .select('title')
+        .eq('id', payment.course_id)
+        .single();
+
+      const msg = buildPaymentNotification({
+        courseName: courseData?.title || payment.course_id,
+        customerName: payment.customer_name || '-',
+        customerPhone: payment.customer_phone || '-',
+        customerEmail: payment.customer_email || '-',
+        amount: tossData.totalAmount,
+        method: tossData.method || '-',
+        approvedAt: tossData.approvedAt,
+        orderId,
+      });
+      await sendTelegramMessage(msg);
+    } catch (telegramError) {
+      console.error('[confirm] 텔레그램 알림 실패 (결제는 완료):', telegramError);
+    }
+
+    // 5. 학생 상태 업데이트 (결제 완료)
     if (payment.student_id) await updateStudentPaidIfExists(supabase, orderId);
 
-    // 5. 올킬보카 결제 시 계정 자동 생성 및 서비스 활성화
+    // 6. 올킬보카 결제 시 계정 자동 생성 및 서비스 활성화
     if (payment.course_id === ALLKILL_COURSE_ID && payment.customer_email) {
       let vocaOk = false;
       try {
